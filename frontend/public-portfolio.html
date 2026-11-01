@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Candidate portfolio · Proofpath</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root { color-scheme: light; font: 16px/1.6 Inter, sans-serif; color: #1f2937; background: #fff; }
+      * { box-sizing: border-box; }
+      body { margin: 0; }
+      header { padding: 18px max(24px, calc((100vw - 920px) / 2)); border-bottom: 1px solid #e5e7eb; background: white; }
+      .brand { color: inherit; text-decoration: none; font: 700 22px Manrope, sans-serif; letter-spacing: -.04em; }
+      .brand span { color: #c8422c; }
+      main { width: min(100% - 32px, 1000px); margin: 36px auto; }
+      #status[data-kind="error"] { color: #b42318; }
+      #status[data-kind="success"] { color: #0f3d3e; }
+      .portfolio-template { --portfolio-accent: #0f3d3e; --portfolio-tint: #eaf6f2; color: #1f2937; }
+      .portfolio-theme--coral { --portfolio-accent: #c8422c; --portfolio-tint: #fff4f0; }
+      .portfolio-theme--teal { --portfolio-accent: #0f3d3e; --portfolio-tint: #eaf6f2; }
+      .portfolio-theme--ink { --portfolio-accent: #1f2937; --portfolio-tint: #f3f4f6; }
+      .portfolio-intro { padding: 28px; border: 1px solid #e5e7eb; border-left: 4px solid var(--portfolio-accent); border-radius: 14px; background: var(--portfolio-tint); }
+      .portfolio-eyebrow { margin: 0 0 8px; color: var(--portfolio-accent); font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+      .portfolio-name { margin: 0; font: 700 clamp(30px, 5vw, 44px)/1.2 Manrope, sans-serif; letter-spacing: -.035em; }
+      .portfolio-sections { display: grid; gap: 18px; margin-top: 18px; }
+      .portfolio-section { min-width: 0; padding: 22px; border: 1px solid #e5e7eb; border-radius: 14px; background: #fff; }
+      .portfolio-section-title { margin: 0 0 12px; color: var(--portfolio-accent); font: 700 20px/1.3 Manrope, sans-serif; }
+      .portfolio-chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; margin: 0; list-style: none; }
+      .portfolio-chip { padding: 4px 10px; border: 1px solid #d7e5e1; border-radius: 99px; background: var(--portfolio-tint); color: #1f2937; font-size: 13px; }
+      .portfolio-empty, .portfolio-project-copy { color: #5a6573; }
+      .portfolio-project-list { display: grid; gap: 12px; }
+      .portfolio-project { padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; }
+      .portfolio-project-title { margin: 0; font: 600 19px/1.35 Manrope, sans-serif; }
+      .portfolio-project-link { display: inline-block; margin: 12px 12px 0 0; color: var(--portfolio-accent); font-weight: 700; overflow-wrap: anywhere; }
+      .portfolio-template--engineer .portfolio-engineer-layout { display: grid; grid-template-columns: minmax(210px, .72fr) minmax(0, 1.6fr); gap: 18px; margin-top: 18px; }
+      .portfolio-template--engineer .portfolio-engineer-content .portfolio-intro { margin-bottom: 18px; }
+      .portfolio-template--engineer .portfolio-engineer-sidebar { display: grid; align-content: start; gap: 14px; }
+      .portfolio-template--engineer .portfolio-engineer-sidebar .portfolio-section { padding: 18px; }
+      .portfolio-template--case-study .portfolio-intro { padding-block: 20px; }
+      .portfolio-template--case-study .portfolio-project { padding: 26px; border-left: 4px solid var(--portfolio-accent); }
+      .portfolio-case-study-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 18px; }
+      .portfolio-template--compact-resume .portfolio-intro { padding: 18px 22px; }
+      .portfolio-template--compact-resume .portfolio-sections { gap: 10px; margin-top: 10px; }
+      .portfolio-template--compact-resume .portfolio-section { padding: 14px 18px; border-radius: 8px; }
+      .portfolio-template--compact-resume .portfolio-section-title { font-size: 17px; }
+      @media (max-width: 700px) { .portfolio-template--engineer .portfolio-engineer-layout, .portfolio-case-study-details { grid-template-columns: 1fr; } .portfolio-intro, .portfolio-section { padding: 18px; } }
+      :focus-visible { outline: 3px solid #0f3d3e; outline-offset: 3px; }
+    </style>
+  </head>
+  <body>
+    <header><a class="brand" href="/">Proofpath<span>.</span></a></header>
+    <main>
+      <p id="status" role="status" aria-live="polite">Loading shared portfolio…</p>
+      <div id="portfolio-view" hidden></div>
+    </main>
+    <script src="/portfolio-renderer.js"></script>
+    <script>
+      const status = document.querySelector("#status");
+      const handle = decodeURIComponent(window.location.pathname.split("/").pop() || "");
+      const validHandle = /^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/.test(handle);
+
+      async function load() {
+        if (!validHandle) throw new Error("This portfolio is unavailable.");
+        const response = await fetch(`/api/v1/public/portfolios/${encodeURIComponent(handle)}`, { credentials: "omit", cache: "no-store" });
+        if (!response.ok) throw new Error("This portfolio is unavailable.");
+        const portfolio = await response.json();
+        document.title = `${portfolio.display_name} · Proofpath portfolio`;
+        const view = document.querySelector("#portfolio-view");
+        window.ProofpathPortfolioRenderer.render(view, portfolio, portfolio.design);
+        view.hidden = false;
+        status.dataset.kind = "success";
+        status.textContent = "Shared portfolio";
+      }
+
+      load().catch(() => {
+        status.dataset.kind = "error";
+        status.textContent = "This portfolio is unavailable.";
+      });
+    </script>
+  </body>
+</html>

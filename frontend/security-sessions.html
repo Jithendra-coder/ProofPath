@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <title>Security & sessions · Proofpath</title>
+    <style>
+      :root { color-scheme: light; font: 16px/1.55 Inter, system-ui, sans-serif; color: #111827; background: #f8f9ff; }
+      * { box-sizing: border-box; }
+      body { margin: 0; }
+      header { display: flex; justify-content: space-between; gap: 16px; padding: 16px max(24px, calc((100vw - 860px) / 2)); background: #fff; border-bottom: 1px solid #e5e7eb; }
+      .brand { color: inherit; text-decoration: none; font: 700 22px Manrope, sans-serif; letter-spacing: -.04em; }
+      .brand span { color: #a62a16; }
+      nav { display: flex; flex-wrap: wrap; gap: 16px; }
+      a { color: #0f3d3e; font-weight: 600; }
+      main { width: min(100% - 32px, 860px); margin: 40px auto; }
+      h1, h2, h3 { font-family: Manrope, Inter, sans-serif; letter-spacing: -.035em; }
+      h1 { margin: 0; font-size: clamp(30px, 4vw, 40px); }
+      h2 { margin: 0 0 12px; font-size: 22px; }
+      .intro, .session p { color: #5a6573; }
+      .intro { margin: 8px 0 22px; }
+      .panel, .session { padding: 20px; margin: 16px 0; border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; }
+      .session { display: flex; justify-content: space-between; gap: 18px; align-items: center; }
+      .session h3, .session p { margin: 0; }
+      .session p { margin-top: 4px; }
+      label { display: block; margin: 12px 0 6px; font-weight: 600; }
+      input { width: 100%; max-width: 420px; min-height: 44px; padding: 10px; border: 1px solid #c6cdd3; border-radius: 8px; font: inherit; }
+      button { min-height: 40px; padding: 9px 13px; border: 0; border-radius: 8px; background: #a62a16; color: #fff; font: 600 14px Inter, sans-serif; cursor: pointer; }
+      button.secondary { background: #eaf6f2; color: #174b49; }
+      button:disabled { opacity: .65; cursor: wait; }
+      button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid #0f3d3e; outline-offset: 2px; }
+      .message { min-height: 24px; }
+      .message[data-kind="error"] { color: #b42318; }
+      .message[data-kind="success"] { color: #166534; }
+      @media (max-width: 600px) { header { flex-wrap: wrap; } .session { align-items: flex-start; flex-direction: column; } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/">Proofpath<span>.</span></a>
+      <nav aria-label="Account navigation">
+        <a href="/candidate/dashboard">Candidate dashboard</a>
+        <a href="/account/privacy">Privacy &amp; data</a>
+        <a href="/organization/onboarding">Organization workspace</a>
+      </nav>
+    </header>
+    <main>
+      <h1>Security & sessions</h1>
+      <p class="intro">Review the active sign-ins for your account. Proofpath does not collect browser or device details for these sessions.</p>
+      <p id="status" class="message" role="status" aria-live="polite">Loading active sessions…</p>
+      <p id="login-link" hidden><a href="/login">Sign in to continue</a></p>
+      <section class="panel" aria-labelledby="revoke-others-title">
+        <h2 id="revoke-others-title">Sign out other sessions</h2>
+        <p>Enter your current password to revoke every other active sign-in on this account.</p>
+        <form id="revoke-others-form">
+          <label for="current-password">Current password</label>
+          <input id="current-password" type="password" autocomplete="current-password" minlength="1" maxlength="128" required />
+          <button id="revoke-others" type="submit">Revoke other sessions</button>
+        </form>
+      </section>
+      <section aria-labelledby="sessions-title">
+        <h2 id="sessions-title">Active sessions</h2>
+        <div id="session-list"></div>
+      </section>
+    </main>
+    <script src="/auth-ui.js"></script>
+    <script>
+      const status = document.querySelector("#status");
+      const sessionList = document.querySelector("#session-list");
+      const revokeOthersForm = document.querySelector("#revoke-others-form");
+
+      function csrfToken() {
+        return document.cookie.split("; ").find((cookie) => cookie.startsWith("__Host-proofpath_csrf="))?.split("=").slice(1).join("=") || "";
+      }
+
+      async function api(method, path, body) {
+        const response = await fetch(path, {
+          method,
+          credentials: "same-origin",
+          cache: "no-store",
+          headers: { ...(body ? { "Content-Type": "application/json" } : {}), ...(method !== "GET" ? { "X-CSRF-Token": csrfToken() } : {}) },
+          ...(body ? { body: JSON.stringify(body) } : {}),
+        });
+        const result = response.status === 204 ? null : await response.json();
+        if (!response.ok) throw Object.assign(new Error(result?.detail || "The request could not be completed."), { status: response.status });
+        return result;
+      }
+
+      function formatTime(value) {
+        return new Date(value).toLocaleString();
+      }
+
+      async function loadSessions() {
+        const result = await api("GET", "/api/v1/me/security/sessions");
+        sessionList.replaceChildren();
+        if (!result.sessions.length) {
+          const empty = document.createElement("p");
+          empty.textContent = "There are no active sessions.";
+          sessionList.append(empty);
+        }
+        for (const item of result.sessions) {
+          const card = document.createElement("article");
+          card.className = "session";
+          const details = document.createElement("div");
+          const title = document.createElement("h3");
+          title.textContent = item.is_current ? "This session" : "Active session";
+          const created = document.createElement("p");
+          created.textContent = `Signed in ${formatTime(item.created_at)}`;
+          const expiry = document.createElement("p");
+          expiry.textContent = `Expires ${formatTime(item.expires_at)}`;
+          details.append(title, created, expiry);
+          const revoke = document.createElement("button");
+          revoke.type = "button";
+          revoke.className = item.is_current ? "" : "secondary";
+          revoke.textContent = item.is_current ? "Revoke this session" : "Revoke session";
+          revoke.addEventListener("click", async () => {
+            revoke.disabled = true;
+            try {
+              await api("DELETE", `/api/v1/me/security/sessions/${encodeURIComponent(item.session_id)}`);
+              if (item.is_current) {
+                sessionList.replaceChildren();
+                revokeOthersForm.hidden = true;
+                document.querySelector("#login-link").hidden = false;
+                status.dataset.kind = "success";
+                status.textContent = "This session was revoked. Sign in again to continue.";
+              } else {
+                await loadSessions();
+                status.dataset.kind = "success";
+                status.textContent = "Session revoked.";
+              }
+            } catch (error) { status.dataset.kind = "error"; status.textContent = error.message; revoke.disabled = false; }
+          });
+          card.append(details, revoke);
+          sessionList.append(card);
+        }
+        if (!status.dataset.kind) status.textContent = "Active sessions loaded.";
+      }
+
+      revokeOthersForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const button = document.querySelector("#revoke-others");
+        button.disabled = true;
+        try {
+          const result = await api("POST", "/api/v1/me/security/sessions/revoke-others", {
+            current_password: document.querySelector("#current-password").value,
+          });
+          document.querySelector("#current-password").value = "";
+          await loadSessions();
+          status.dataset.kind = "success";
+          status.textContent = `${result.revoked_session_count} other session${result.revoked_session_count === 1 ? "" : "s"} revoked.`;
+        } catch (error) {
+          status.dataset.kind = "error";
+          status.textContent = error.message;
+        } finally { button.disabled = false; }
+      });
+
+      loadSessions().catch((error) => {
+        status.dataset.kind = "error";
+        status.textContent = error.status === 401 ? "Sign in to manage account sessions." : error.message;
+        if (error.status === 401) document.querySelector("#login-link").hidden = false;
+      });
+    </script>
+  </body>
+</html>

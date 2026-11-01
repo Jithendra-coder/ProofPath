@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Privacy &amp; data · Proofpath</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root { color-scheme: light; font: 16px/1.55 Inter, sans-serif; color: #1f2937; background: #fff; }
+      * { box-sizing: border-box; }
+      body { margin: 0; }
+      header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px max(24px, calc((100vw - 900px) / 2)); border-bottom: 1px solid #e5e7eb; background: #fff; }
+      .brand { color: #1f2937; text-decoration: none; font: 700 21px Manrope, sans-serif; }
+      .brand span { color: #c8422c; }
+      nav { display: flex; flex-wrap: wrap; gap: 16px; }
+      a { color: #0f3d3e; font-weight: 600; }
+      main { width: min(100% - 32px, 900px); margin: 38px auto 64px; }
+      h1, h2 { font-family: Manrope, sans-serif; }
+      h1 { margin: 0; font-size: clamp(30px, 4vw, 40px); line-height: 1.2; }
+      h2 { margin: 0 0 8px; font-size: 21px; }
+      .intro { max-width: 680px; margin: 10px 0 24px; color: #5a6573; }
+      .panel { margin: 16px 0; padding: 22px; border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; }
+      .panel p, li { color: #5a6573; }
+      .panel ul { padding-left: 22px; }
+      label { display: block; margin: 16px 0 6px; font-weight: 600; }
+      input { width: 100%; max-width: 420px; min-height: 44px; padding: 9px 11px; border: 1px solid #c6cdd3; border-radius: 7px; color: #1f2937; font: inherit; }
+      button { min-height: 42px; margin-top: 12px; padding: 9px 15px; border: 1px solid #c8422c; border-radius: 7px; background: #c8422c; color: #fff; font: 600 14px Inter, sans-serif; cursor: pointer; }
+      button:hover:not(:disabled) { background: #a93424; }
+      button:disabled { cursor: wait; opacity: .6; }
+      a:focus-visible, input:focus-visible, button:focus-visible { outline: 3px solid #0f3d3e; outline-offset: 3px; }
+      .status { min-height: 24px; margin: 12px 0 0; }
+      .status[data-kind="error"] { color: #b42318; }
+      .status[data-kind="success"] { color: #166534; }
+      @media (max-width: 560px) { header { align-items: flex-start; flex-direction: column; } .panel { padding: 17px; } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/">Proofpath<span>.</span></a>
+      <nav aria-label="Account navigation">
+        <a href="/candidate/dashboard">Candidate dashboard</a>
+        <a href="/security/sessions">Security &amp; sessions</a>
+      </nav>
+    </header>
+    <main>
+      <h1>Privacy &amp; data</h1>
+      <p class="intro">Download a copy of the personal data saved in your Proofpath account. We re-check your password before preparing the file.</p>
+      <section class="panel" aria-labelledby="included-title">
+        <h2 id="included-title">What the export contains</h2>
+        <ul>
+          <li>Your account, candidate profile, private and public projects, portfolio settings, versions, and plan entitlement.</li>
+          <li>Your saved jobs, applications and snapshots, interview schedules and responses, in-app notifications, evidence, assessment invitations, your submitted code and test results.</li>
+          <li>Your organization membership and invitations addressed to your account, plus sign-in timestamps.</li>
+        </ul>
+        <p>It excludes passwords and token material, other organization members’ data, private employer test inputs, and internal security logs. Uploaded artifacts and provider billing records are not available in this export.</p>
+      </section>
+      <section class="panel" aria-labelledby="download-title">
+        <h2 id="download-title">Download your data</h2>
+        <form id="export-form">
+          <label for="current-password">Current password</label>
+          <input id="current-password" type="password" autocomplete="current-password" minlength="1" maxlength="128" required />
+          <button id="download-button" type="submit">Download my data</button>
+        </form>
+        <p id="status" class="status" role="status" aria-live="polite">Your export is generated on request and is not kept as a second copy on our servers.</p>
+        <p id="login-link" hidden><a href="/login">Sign in to continue</a></p>
+      </section>
+    </main>
+    <script>
+      const form = document.querySelector("#export-form");
+      const password = document.querySelector("#current-password");
+      const button = document.querySelector("#download-button");
+      const status = document.querySelector("#status");
+
+      function csrfToken() {
+        return document.cookie.split("; ").find((cookie) => cookie.startsWith("__Host-proofpath_csrf="))?.split("=").slice(1).join("=") || "";
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        button.disabled = true;
+        status.dataset.kind = "";
+        status.textContent = "Preparing your export…";
+        try {
+          const response = await fetch("/api/v1/me/data-exports", {
+            method: "POST",
+            credentials: "same-origin",
+            cache: "no-store",
+            headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken() },
+            body: JSON.stringify({ current_password: password.value }),
+          });
+          if (!response.ok) {
+            const problem = await response.json();
+            const error = new Error(problem.detail || "The export could not be prepared.");
+            error.status = response.status;
+            throw error;
+          }
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          const download = document.createElement("a");
+          download.href = url;
+          download.download = response.headers.get("Content-Disposition")?.match(/filename="([^"]+)"/)?.[1] || "proofpath-account-data.json";
+          document.body.append(download);
+          download.click();
+          download.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+          password.value = "";
+          status.dataset.kind = "success";
+          status.textContent = "Your account data export is ready and has been downloaded.";
+        } catch (error) {
+          status.dataset.kind = "error";
+          status.textContent = error.message;
+          if (error.status === 401) document.querySelector("#login-link").hidden = false;
+        } finally { button.disabled = false; }
+      });
+    </script>
+  </body>
+</html>

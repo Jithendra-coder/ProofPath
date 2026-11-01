@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <title>My Projects · Proofpath</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root { color-scheme: light; font: 16px/1.55 Inter, sans-serif; color: #111827; background: #f8f9ff; }
+      * { box-sizing: border-box; }
+      body { margin: 0; }
+      header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px max(24px, calc((100vw - 1120px) / 2)); background: #fff; border-bottom: 1px solid #e5e7eb; }
+      .brand { color: inherit; text-decoration: none; font: 700 22px Manrope, sans-serif; letter-spacing: -.04em; }
+      .brand span { color: #a62a16; }
+      nav { display: flex; align-items: center; gap: 18px; }
+      nav a, .text-link { color: #0f3d3e; font-weight: 600; }
+      button { border: 0; border-radius: 8px; padding: 11px 16px; background: #a62a16; color: #fff; font: 600 14px Inter, sans-serif; cursor: pointer; }
+      button:hover { background: #a93424; }
+      button.secondary { background: #eaf6f2; color: #174b49; }
+      button.danger { background: #fff; color: #b42318; border: 1px solid #e5b8b4; }
+      button:disabled { opacity: .65; cursor: wait; }
+      main { width: min(100% - 32px, 1120px); margin: 48px auto; }
+      .heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
+      h1, h2 { font-family: Manrope, sans-serif; letter-spacing: -.035em; }
+      h1 { margin: 0; font-size: clamp(30px, 4vw, 40px); line-height: 1.15; }
+      h2 { margin: 0 0 12px; font-size: 22px; }
+      p { color: #5a6573; }
+      .eyebrow { color: #0f3d3e; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+      .panel { padding: 24px; margin-bottom: 24px; border: 1px solid #e5e7eb; border-radius: 14px; background: #fff; }
+      .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; }
+      label { display: block; margin: 14px 0 6px; font-size: 14px; font-weight: 600; }
+      input, textarea { width: 100%; padding: 11px 12px; border: 1px solid #c6cdd3; border-radius: 8px; color: #111827; font: inherit; }
+      textarea { min-height: 96px; resize: vertical; }
+      input:focus, textarea:focus, button:focus-visible, a:focus-visible { outline: 2px solid #0f3d3e; outline-offset: 2px; }
+      .wide { grid-column: 1 / -1; }
+      .hint { margin: 5px 0 0; color: #6b7280; font-size: 13px; }
+      .competency-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px; margin-top: 10px; }
+      .competency-choice { display: flex; align-items: flex-start; gap: 9px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 9px; background: #fff; font-weight: 500; }
+      .competency-choice input { width: auto; margin: 4px 0 0; }
+      .competency-choice span { display: grid; gap: 3px; }
+      .competency-choice small { color: #6b7280; font-weight: 400; }
+      .claim-field { margin-top: 14px; }
+      .claim-field textarea { min-height: 76px; }
+      .claim-evidence { padding: 12px; margin-top: 14px; border-left: 3px solid #0f3d3e; background: #f7f8f8; }
+      .actions { display: flex; gap: 10px; margin-top: 18px; }
+      .message { min-height: 24px; margin: 12px 0 0; }
+      .message[data-kind="error"] { color: #b42318; }
+      .message[data-kind="success"] { color: #166534; }
+      .project { margin: 14px 0; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; }
+      .project-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+      .project h3 { margin: 0; font: 600 20px Manrope, sans-serif; }
+      .badge { display: inline-block; margin-top: 9px; padding: 3px 9px; border-radius: 99px; background: #eaf6f2; color: #0f3d3e; font-size: 12px; font-weight: 700; }
+      .project p { margin: 14px 0 0; }
+      .tags { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 14px; }
+      .tag { padding: 3px 9px; border: 1px solid #e5e7eb; border-radius: 5px; background: #f7f8f8; color: #5a6573; font-size: 12px; }
+      .source-list { display: grid; gap: 8px; margin-top: 16px; }
+      .source-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 11px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f7f8f8; }
+      .source-row a { overflow-wrap: anywhere; color: #0f3d3e; }
+      .source-form { display: flex; align-items: flex-end; gap: 10px; margin-top: 16px; }
+      .source-form label { flex: 1; margin: 0; }
+      .source-form input { display: block; margin-top: 6px; }
+      .project-actions { display: flex; gap: 8px; }
+      .consent { display: flex; align-items: flex-start; gap: 9px; margin: 16px 0; color: #394150; font-size: 14px; }
+      .consent input { width: auto; margin-top: 5px; }
+      #public-link { display: inline-block; margin-top: 12px; overflow-wrap: anywhere; }
+      #login-link { display: none; }
+      @media (max-width: 700px) { header { align-items: flex-start; } nav { gap: 10px; flex-wrap: wrap; justify-content: flex-end; } main { margin-top: 28px; } .heading { align-items: flex-start; flex-direction: column; } .form-grid { grid-template-columns: 1fr; } .wide { grid-column: auto; } .project-top { flex-direction: column; } .source-form { align-items: stretch; flex-direction: column; } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/">Proofpath<span>.</span></a>
+      <nav aria-label="Workspace">
+        <a href="/jobs">Find jobs</a>
+        <a href="/candidate/onboarding">Candidate profile</a>
+        <a href="/organization/onboarding">Organization workspace</a>
+        <button id="logout" type="button" hidden>Sign out</button>
+      </nav>
+    </header>
+    <main>
+      <div class="heading">
+        <div>
+          <p class="eyebrow">Candidate workspace · private drafts</p>
+          <h1>My Projects</h1>
+          <p>Record what you built and your own contribution. Drafts stay private. GitHub links are stored only; Proofpath does not fetch or verify repositories.</p>
+        </div>
+        <a class="text-link" href="#project-form">Add project</a>
+      </div>
+      <section class="panel" aria-labelledby="form-title">
+        <h2 id="form-title">Add a project</h2>
+        <form id="project-form">
+          <div class="form-grid">
+            <div class="wide">
+              <label for="project-name">Project name</label>
+              <input id="project-name" name="name" maxlength="160" minlength="2" required />
+            </div>
+            <div>
+              <label for="problem-statement">Problem statement</label>
+              <textarea id="problem-statement" name="problem_statement" maxlength="2000"></textarea>
+            </div>
+            <div>
+              <label for="contribution">Your contribution</label>
+              <textarea id="contribution" name="contribution" maxlength="4000"></textarea>
+            </div>
+            <div class="wide">
+              <label for="technologies">Technologies</label>
+              <input id="technologies" name="technologies" maxlength="500" aria-describedby="technology-hint" />
+              <p class="hint" id="technology-hint">Up to 12 labels, separated by commas.</p>
+            </div>
+            <div class="wide">
+              <label>Competencies you claim this project demonstrates</label>
+              <p class="hint">Choose from the Python/FastAPI track and explain your claim. These records are self-reported, unverified, and visible only to you; they are not included in public portfolios or application snapshots.</p>
+              <div id="competency-options" class="competency-options" role="group" aria-label="Python and FastAPI competencies"></div>
+              <div id="competency-claim-details"></div>
+            </div>
+          </div>
+          <div class="actions">
+            <button id="save-project" type="submit">Save private draft</button>
+            <button id="cancel-edit" class="secondary" type="button" hidden>Cancel edit</button>
+          </div>
+        </form>
+        <p class="message" id="message" role="status" aria-live="polite">Loading your private projects…</p>
+        <p id="login-link"><a class="text-link" href="/login">Sign in to continue</a></p>
+      </section>
+      <section class="panel" aria-labelledby="share-title">
+        <h2 id="share-title">Share your portfolio</h2>
+        <p>Your public profile shows your name, target roles, and skills. Only projects you publish individually appear there. Anyone with the link can view it.</p>
+        <form id="handle-form">
+          <label for="public-handle">Public profile address</label>
+          <input id="public-handle" name="handle" minlength="3" maxlength="30" pattern="[A-Za-z0-9][A-Za-z0-9-]{1,28}[A-Za-z0-9]" autocomplete="off" required disabled />
+          <p class="hint">Use 3–30 letters, numbers, or internal hyphens. This address becomes permanent after your first publication.</p>
+          <button id="save-handle" type="submit" disabled>Save public address</button>
+        </form>
+        <label class="consent" for="portfolio-consent">
+          <input id="portfolio-consent" type="checkbox" />
+          <span>I agree to make my name, target roles, and skills visible to anyone with my portfolio link.</span>
+        </label>
+        <button id="publish-portfolio" type="button" disabled>Publish profile</button>
+        <button id="unpublish-portfolio" class="secondary" type="button" hidden>Unpublish portfolio</button>
+        <a id="public-link" class="text-link" hidden></a>
+      </section>
+      <section class="panel" aria-labelledby="discovery-title">
+        <h2 id="discovery-title">Employer discovery</h2>
+        <p>Opt in to let organization owners, admins, and recruiters search your public profile by name, target roles, and skills. They can open the same public profile link; email, private projects, and private claims stay hidden. Unpublishing your profile removes it from discovery.</p>
+        <form id="discovery-form">
+          <label class="consent" for="discovery-enabled">
+            <input id="discovery-enabled" type="checkbox" disabled />
+            <span>Include my public profile in employer discovery.</span>
+          </label>
+          <button id="save-discovery" class="secondary" type="submit" disabled>Save discovery preference</button>
+        </form>
+        <p class="message" id="discovery-message" role="status" aria-live="polite">Loading your discovery preference…</p>
+      </section>
+      <section aria-labelledby="projects-title">
+        <h2 id="projects-title">Your projects</h2>
+        <div id="projects-list" aria-live="polite"></div>
+      </section>
+    </main>
+    <script>
+      const form = document.querySelector("#project-form");
+      const message = document.querySelector("#message");
+      const list = document.querySelector("#projects-list");
+      const saveButton = document.querySelector("#save-project");
+      const cancelButton = document.querySelector("#cancel-edit");
+      const logoutButton = document.querySelector("#logout");
+      const loginLink = document.querySelector("#login-link");
+      const handleForm = document.querySelector("#handle-form");
+      const handleInput = document.querySelector("#public-handle");
+      const saveHandleButton = document.querySelector("#save-handle");
+      const portfolioConsent = document.querySelector("#portfolio-consent");
+      const publishPortfolioButton = document.querySelector("#publish-portfolio");
+      const unpublishPortfolioButton = document.querySelector("#unpublish-portfolio");
+      const publicLink = document.querySelector("#public-link");
+      const discoveryForm = document.querySelector("#discovery-form");
+      const discoveryToggle = document.querySelector("#discovery-enabled");
+      const saveDiscoveryButton = document.querySelector("#save-discovery");
+      const discoveryMessage = document.querySelector("#discovery-message");
+      let currentProject = null;
+      let projects = [];
+      let competencies = [];
+      let portfolio = null;
+      let portfolioVersion = 0;
+      let discovery = { discoverable: false, profile_published: false };
+
+      function showError(error) {
+        message.dataset.kind = "error";
+        message.textContent = error.message || "The request could not be completed.";
+      }
+
+      function csrfToken() {
+        return document.cookie.split("; ").find((part) => part.startsWith("__Host-proofpath_csrf="))?.split("=").slice(1).join("=") || "";
+      }
+
+      async function api(method, path, body) {
+        const response = await fetch(path, {
+          method,
+          credentials: "same-origin",
+          headers: { ...(body ? { "Content-Type": "application/json" } : {}), ...(method !== "GET" ? { "X-CSRF-Token": csrfToken() } : {}) },
+          ...(body ? { body: JSON.stringify(body) } : {}),
+        });
+        const result = response.status === 204 ? null : await response.json();
+        if (!response.ok) throw new Error(result?.detail || "The request could not be completed.");
+        return result;
+      }
+
+      function resetForm() {
+        currentProject = null;
+        form.reset();
+        renderCompetencyOptions();
+        document.querySelector("#form-title").textContent = "Add a project";
+        saveButton.textContent = "Save private draft";
+        cancelButton.hidden = true;
+      }
+
+      function renderCompetencyClaimFields(previousClaims = []) {
+        const details = document.querySelector("#competency-claim-details");
+        const priorTexts = new Map([...details.querySelectorAll("textarea")].map((field) => [field.dataset.competencyCode, field.value]));
+        const originalTexts = new Map(previousClaims.map((claim) => [claim.competency_code, claim.statement]));
+        const selected = new Set([...document.querySelectorAll("#competency-options input:checked")].map((input) => input.value));
+        details.replaceChildren();
+        for (const item of competencies.filter((entry) => selected.has(entry.code))) {
+          const wrapper = document.createElement("div");
+          wrapper.className = "claim-field";
+          const label = document.createElement("label");
+          label.textContent = `How does this project relate to ${item.name}?`;
+          const textarea = document.createElement("textarea");
+          textarea.dataset.competencyCode = item.code;
+          textarea.setAttribute("aria-label", label.textContent);
+          textarea.minLength = 20;
+          textarea.maxLength = 1000;
+          textarea.required = true;
+          textarea.value = priorTexts.get(item.code) ?? originalTexts.get(item.code) ?? "";
+          label.htmlFor = `claim-${item.code}`;
+          textarea.id = label.htmlFor;
+          wrapper.append(label, textarea);
+          details.append(wrapper);
+        }
+      }
+
+      function renderCompetencyOptions(previousClaims = []) {
+        const options = document.querySelector("#competency-options");
+        const selected = new Set(previousClaims.map((claim) => claim.competency_code));
+        options.replaceChildren();
+        for (const item of competencies) {
+          const label = document.createElement("label");
+          label.className = "competency-choice";
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.value = item.code;
+          checkbox.checked = selected.has(item.code);
+          checkbox.setAttribute("aria-label", item.name);
+          const text = document.createElement("span");
+          const name = document.createElement("strong");
+          name.textContent = item.name;
+          const description = document.createElement("small");
+          description.textContent = item.description;
+          text.append(name, description);
+          label.append(checkbox, text);
+          checkbox.addEventListener("change", () => renderCompetencyClaimFields(previousClaims));
+          options.append(label);
+        }
+        renderCompetencyClaimFields(previousClaims);
+      }
+
+      async function refreshPortfolio() {
+        const [result, discoveryResult] = await Promise.all([
+          api("GET", "/api/v1/me/portfolio"),
+          api("GET", "/api/v1/me/candidate-profile/discovery"),
+        ]);
+        portfolio = result;
+        discovery = discoveryResult;
+        projects = result.projects;
+        portfolioVersion = result.version;
+        if (!handleForm.dataset.edited) handleInput.value = result.public_handle || "";
+        handleInput.disabled = result.public_handle_locked;
+        saveHandleButton.disabled = result.public_handle_locked;
+        publishPortfolioButton.hidden = Boolean(result.published_at);
+        unpublishPortfolioButton.hidden = !result.published_at;
+        publishPortfolioButton.disabled = !portfolioConsent.checked || !result.public_handle;
+        publicLink.hidden = !result.public_handle || !result.published_at;
+        if (result.public_handle) {
+          const path = `/u/${encodeURIComponent(result.public_handle)}`;
+          publicLink.href = path;
+          publicLink.textContent = `${window.location.origin}${path}`;
+        }
+        discoveryToggle.checked = discovery.discoverable;
+        discoveryToggle.disabled = !discovery.profile_published;
+        saveDiscoveryButton.disabled = !discovery.profile_published || discoveryToggle.checked === discovery.discoverable;
+        discoveryMessage.dataset.kind = "";
+        discoveryMessage.textContent = !discovery.profile_published
+          ? "Publish your free profile before opting into discovery."
+          : discovery.discoverable
+            ? "Your public profile is searchable by eligible hiring teams."
+            : "Your public profile is not included in employer discovery.";
+        renderProjects();
+      }
+
+      async function moveProject(from, to, button) {
+        const reordered = [...projects];
+        [reordered[from], reordered[to]] = [reordered[to], reordered[from]];
+        button.disabled = true;
+        try {
+          const result = await api("PATCH", "/api/v1/me/portfolio", {
+            expected_version: portfolioVersion,
+            project_ids: reordered.map((project) => project.id),
+          });
+          projects = result.projects;
+          portfolioVersion = result.version;
+          renderProjects();
+          message.dataset.kind = "success";
+          message.textContent = "Private portfolio order updated.";
+        } catch (error) { showError(error); }
+        finally { button.disabled = false; }
+      }
+
+      function renderProjects() {
+        list.replaceChildren();
+        if (!projects.length) {
+          const empty = document.createElement("p");
+          empty.textContent = "No project drafts yet.";
+          list.append(empty);
+          return;
+        }
+        for (const [index, project] of projects.entries()) {
+          const card = document.createElement("article");
+          card.className = "project";
+          const top = document.createElement("div");
+          top.className = "project-top";
+          const title = document.createElement("h3");
+          title.textContent = project.name;
+          const badge = document.createElement("span");
+          badge.className = "badge";
+          badge.textContent = `${project.visibility === "public" ? "Public" : "Private draft"} · self-reported`;
+          const titleBlock = document.createElement("div");
+          titleBlock.append(title, badge);
+          const actions = document.createElement("div");
+          actions.className = "project-actions";
+          const edit = document.createElement("button");
+          edit.type = "button";
+          edit.className = "secondary";
+          edit.textContent = "Edit";
+          edit.disabled = project.visibility === "public";
+          if (edit.disabled) edit.title = "Unpublish this project before editing it.";
+          edit.addEventListener("click", () => {
+            currentProject = project;
+            form.elements.namedItem("name").value = project.name;
+            form.elements.namedItem("problem_statement").value = project.problem_statement;
+            form.elements.namedItem("contribution").value = project.contribution;
+            form.elements.namedItem("technologies").value = project.technologies.join(", ");
+            renderCompetencyOptions(project.competency_claims);
+            document.querySelector("#form-title").textContent = "Edit project draft";
+            saveButton.textContent = "Save changes";
+            cancelButton.hidden = false;
+            form.scrollIntoView({ behavior: "smooth", block: "start" });
+          });
+          if (index > 0) {
+            const up = document.createElement("button");
+            up.type = "button";
+            up.className = "secondary";
+            up.textContent = "Move up";
+            up.addEventListener("click", () => moveProject(index, index - 1, up));
+            actions.append(up);
+          }
+          if (index < projects.length - 1) {
+            const down = document.createElement("button");
+            down.type = "button";
+            down.className = "secondary";
+            down.textContent = "Move down";
+            down.addEventListener("click", () => moveProject(index, index + 1, down));
+            actions.append(down);
+          }
+          const remove = document.createElement("button");
+          remove.type = "button";
+          remove.className = "danger";
+          remove.textContent = "Delete";
+          remove.addEventListener("click", async () => {
+            if (!window.confirm(`Delete the private draft “${project.name}”?`)) return;
+            remove.disabled = true;
+            try {
+              await api("DELETE", `/api/v1/me/projects/${project.id}`);
+              await refreshPortfolio();
+              message.dataset.kind = "success";
+              message.textContent = "Project draft deleted.";
+              if (currentProject?.id === project.id) resetForm();
+            } catch (error) { showError(error); }
+            finally { remove.disabled = false; }
+          });
+          actions.append(edit, remove);
+          const visibility = document.createElement("button");
+          visibility.type = "button";
+          visibility.className = "secondary";
+          visibility.textContent = project.visibility === "public" ? "Unpublish project" : "Publish project";
+          visibility.addEventListener("click", async () => {
+            if (project.visibility === "private" && !window.confirm(`Publish “${project.name}”? Its name, description, contribution, technologies, and saved GitHub links will be visible to anyone with your portfolio link.`)) return;
+            visibility.disabled = true;
+            try {
+              if (project.visibility === "public") {
+                await api("POST", `/api/v1/me/projects/${project.id}/unpublish`);
+                projects = projects.map((item) => item.id === project.id ? { ...item, visibility: "private" } : item);
+              } else {
+                const updated = await api("POST", `/api/v1/me/projects/${project.id}/publish`, {
+                  expected_version: project.version,
+                  consent_version: "public-project-v1",
+                });
+                projects = projects.map((item) => item.id === project.id ? updated : item);
+              }
+              renderProjects();
+              message.dataset.kind = "success";
+              message.textContent = project.visibility === "public" ? "Project unpublished." : "Project published to your portfolio.";
+            } catch (error) { showError(error); }
+            finally { visibility.disabled = false; }
+          });
+          actions.append(visibility);
+          top.append(titleBlock, actions);
+          card.append(top);
+          for (const [label, value] of [["Problem", project.problem_statement], ["Contribution", project.contribution]]) {
+            if (!value) continue;
+            const paragraph = document.createElement("p");
+            const strong = document.createElement("strong");
+            strong.textContent = `${label}: `;
+            paragraph.append(strong, document.createTextNode(value));
+            card.append(paragraph);
+          }
+          if (project.technologies.length) {
+            const tags = document.createElement("div");
+            tags.className = "tags";
+            for (const technology of project.technologies) {
+              const tag = document.createElement("span");
+              tag.className = "tag";
+              tag.textContent = technology;
+              tags.append(tag);
+            }
+            card.append(tags);
+          }
+          if (project.competency_claims.length) {
+            const claims = document.createElement("section");
+            claims.className = "claim-evidence";
+            const heading = document.createElement("strong");
+            heading.textContent = "Self-reported competency claims · unverified · private";
+            claims.append(heading);
+            for (const evidence of project.competency_claims) {
+              const item = document.createElement("p");
+              item.textContent = `${evidence.competency_name}: ${evidence.statement}`;
+              const limitation = document.createElement("small");
+              limitation.textContent = evidence.evidence_limitations;
+              claims.append(item, limitation);
+            }
+            card.append(claims);
+          }
+          if (project.source_links.length) {
+            const sources = document.createElement("div");
+            sources.className = "source-list";
+            for (const source of project.source_links) {
+              const row = document.createElement("div");
+              row.className = "source-row";
+              const link = document.createElement("a");
+              link.href = source.url;
+              link.target = "_blank";
+              link.rel = "noopener noreferrer";
+              link.textContent = source.url;
+              const removeLink = document.createElement("button");
+              removeLink.type = "button";
+              removeLink.className = "danger";
+              removeLink.textContent = "Remove link";
+              removeLink.disabled = project.visibility === "public";
+              removeLink.addEventListener("click", async () => {
+                removeLink.disabled = true;
+                try {
+                  await api("DELETE", `/api/v1/me/projects/${project.id}/source-links/${source.id}`);
+                  projects = projects.map((item) => item.id === project.id
+                    ? { ...item, source_links: item.source_links.filter((candidate) => candidate.id !== source.id) }
+                    : item);
+                  renderProjects();
+                  message.dataset.kind = "success";
+                  message.textContent = "GitHub link removed.";
+                } catch (error) { showError(error); }
+                finally { removeLink.disabled = false; }
+              });
+              row.append(link, removeLink);
+              sources.append(row);
+            }
+            card.append(sources);
+          }
+          const sourceForm = document.createElement("form");
+          sourceForm.className = "source-form";
+          const sourceLabel = document.createElement("label");
+          sourceLabel.textContent = "GitHub repository URL";
+          const sourceInput = document.createElement("input");
+          sourceInput.type = "url";
+          sourceInput.required = true;
+          sourceInput.maxLength = 300;
+          sourceInput.placeholder = "https://github.com/owner/repository";
+          sourceLabel.append(sourceInput);
+          const sourceButton = document.createElement("button");
+          sourceButton.type = "submit";
+          sourceButton.textContent = "Add link";
+          sourceButton.disabled = project.visibility === "public";
+          sourceForm.append(sourceLabel, sourceButton);
+          sourceForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            sourceButton.disabled = true;
+            try {
+              const source = await api("POST", `/api/v1/me/projects/${project.id}/source-links`, { url: sourceInput.value });
+              projects = projects.map((item) => item.id === project.id && !item.source_links.some((entry) => entry.id === source.id)
+                ? { ...item, source_links: [...item.source_links, source] }
+                : item);
+              renderProjects();
+              message.dataset.kind = "success";
+              message.textContent = "GitHub link saved. Repository contents were not fetched.";
+            } catch (error) { showError(error); }
+            finally { sourceButton.disabled = false; }
+          });
+          card.append(sourceForm);
+          list.append(card);
+        }
+      }
+
+      async function loadProjects() {
+        try {
+          const catalog = await api("GET", "/api/v1/competencies?track=python-fastapi-backend");
+          competencies = catalog.competencies;
+          renderCompetencyOptions();
+          await refreshPortfolio();
+          message.dataset.kind = "success";
+          message.textContent = "Your private project drafts are ready.";
+          logoutButton.hidden = false;
+        } catch (error) {
+          showError(error);
+          if (error.message === "Sign in to continue.") loginLink.style.display = "block";
+        }
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        saveButton.disabled = true;
+        const data = new FormData(form);
+        const body = {
+          name: data.get("name").trim(),
+          problem_statement: data.get("problem_statement").trim(),
+          contribution: data.get("contribution").trim(),
+          technologies: data.get("technologies").split(",").map((value) => value.trim()).filter(Boolean),
+          competency_claims: [...document.querySelectorAll("#competency-options input:checked")].map((input) => ({
+            competency_code: input.value,
+            statement: [...document.querySelectorAll("#competency-claim-details textarea")]
+              .find((field) => field.dataset.competencyCode === input.value).value.trim(),
+          })),
+        };
+        if (body.technologies.length > 12) {
+          showError(new Error("Enter no more than 12 technologies."));
+          saveButton.disabled = false;
+          return;
+        }
+        const editing = currentProject !== null;
+        message.textContent = editing ? "Saving project changes…" : "Saving private project draft…";
+        try {
+          if (currentProject) {
+            await api("PATCH", `/api/v1/me/projects/${currentProject.id}`, { ...body, expected_version: currentProject.version });
+          } else {
+            await api("POST", "/api/v1/me/projects", { ...body, request_key: crypto.randomUUID() });
+          }
+          await refreshPortfolio();
+          resetForm();
+          renderProjects();
+          message.dataset.kind = "success";
+          message.textContent = editing ? "Your project changes are saved." : "Your private project draft is saved.";
+        } catch (error) { showError(error); }
+        finally { saveButton.disabled = false; }
+      });
+
+      cancelButton.addEventListener("click", resetForm);
+      handleForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        saveHandleButton.disabled = true;
+        try {
+          await api("POST", "/api/v1/me/candidate-profile/handle", { handle: handleInput.value });
+          delete handleForm.dataset.edited;
+          await refreshPortfolio();
+          message.dataset.kind = "success";
+          message.textContent = "Public profile address saved.";
+        } catch (error) { showError(error); }
+        finally { saveHandleButton.disabled = false; }
+      });
+      handleInput.addEventListener("input", () => { handleForm.dataset.edited = "true"; });
+      portfolioConsent.addEventListener("change", () => {
+        publishPortfolioButton.disabled = !portfolioConsent.checked || !portfolio?.public_handle;
+      });
+      publishPortfolioButton.addEventListener("click", async () => {
+        publishPortfolioButton.disabled = true;
+        try {
+          await api("POST", "/api/v1/me/portfolio/publish", { consent_version: "public-portfolio-v1" });
+          await refreshPortfolio();
+          message.dataset.kind = "success";
+          message.textContent = "Your portfolio is public.";
+        } catch (error) { showError(error); publishPortfolioButton.disabled = false; }
+      });
+      unpublishPortfolioButton.addEventListener("click", async () => {
+        unpublishPortfolioButton.disabled = true;
+        try {
+          await api("POST", "/api/v1/me/portfolio/unpublish");
+          portfolioConsent.checked = false;
+          await refreshPortfolio();
+          message.dataset.kind = "success";
+          message.textContent = "Your portfolio and its projects are private.";
+        } catch (error) { showError(error); }
+        finally { unpublishPortfolioButton.disabled = false; }
+      });
+      discoveryToggle.addEventListener("change", () => {
+        saveDiscoveryButton.disabled = !discovery.profile_published || discoveryToggle.checked === discovery.discoverable;
+      });
+      discoveryForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        saveDiscoveryButton.disabled = true;
+        try {
+          await api("PATCH", "/api/v1/me/candidate-profile/discovery", {
+            discoverable: discoveryToggle.checked,
+            consent_version: "candidate-discovery-v1",
+          });
+          await refreshPortfolio();
+          discoveryMessage.dataset.kind = "success";
+          discoveryMessage.textContent = discoveryToggle.checked
+            ? "Your public profile is searchable by eligible hiring teams."
+            : "Your profile was removed from employer discovery.";
+        } catch (error) {
+          showError(error);
+          discoveryMessage.dataset.kind = "error";
+          discoveryMessage.textContent = error.message;
+          saveDiscoveryButton.disabled = discoveryToggle.checked === discovery.discoverable;
+        }
+      });
+      logoutButton.addEventListener("click", async () => {
+        logoutButton.disabled = true;
+        try {
+          await api("POST", "/api/v1/auth/logout");
+          window.location.assign("/login");
+        } catch (error) { showError(error); logoutButton.disabled = false; }
+      });
+      loadProjects();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <title>Assessments · Proofpath</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root { color-scheme: light; font: 16px/1.55 Inter, sans-serif; color: #111827; background: #f8f9ff; }
+      * { box-sizing: border-box; }
+      body { margin: 0; }
+      header { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 18px max(24px, calc((100vw - 980px) / 2)); border-bottom: 1px solid #e5e7eb; background: white; }
+      nav { display: flex; gap: 18px; flex-wrap: wrap; }
+      a { color: #0f3d3e; font-weight: 600; }
+      .brand { color: #111827; text-decoration: none; font: 700 22px Manrope, sans-serif; }
+      .brand span { color: #a62a16; }
+      main { width: min(100% - 32px, 980px); margin: 40px auto; }
+      h1, h2, h3 { font-family: Manrope, sans-serif; letter-spacing: -.035em; }
+      h1 { margin: 0; font-size: clamp(30px, 4vw, 40px); }
+      h2 { margin: 0 0 14px; font-size: 22px; }
+      h3 { margin: 0; font-size: 19px; }
+      p { color: #5a6573; }
+      .panel, .assessment { padding: 22px; margin: 18px 0; border: 1px solid #e5e7eb; border-radius: 14px; background: white; }
+      label { display: block; margin: 14px 0 6px; font-size: 14px; font-weight: 600; }
+      input, select, textarea { display: block; width: 100%; padding: 11px 12px; border: 1px solid #c6cdd3; border-radius: 8px; background: white; font: inherit; }
+      textarea { min-height: 110px; resize: vertical; }
+      button { min-height: 40px; margin: 14px 8px 0 0; padding: 9px 13px; border: 0; border-radius: 8px; background: #a62a16; color: #fff; font: 600 14px Inter, sans-serif; cursor: pointer; }
+      button.secondary { background: #eaf6f2; color: #174b49; }
+      button:disabled { opacity: .65; }
+      .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      .tools { display: flex; gap: 18px; flex-wrap: wrap; padding: 0; border: 0; }
+      .tools label { display: flex; align-items: center; gap: 8px; }
+      .tools input { width: auto; }
+      .alignments { margin: 16px 0; padding: 14px; border: 1px solid #e5e7eb; border-radius: 10px; }
+      .alignment { margin: 10px 0; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; }
+      .card-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+      .status { padding: 4px 9px; border-radius: 99px; background: #eaf6f2; color: #174b49; font-size: 12px; font-weight: 700; text-transform: capitalize; }
+      .note { padding: 12px 14px; border-left: 3px solid #a62a16; background: #fff8f6; }
+      #message[data-kind="error"] { color: #b42318; }
+      #message[data-kind="success"] { color: #166534; }
+      @media (max-width: 620px) { header { align-items: flex-start; flex-direction: column; } .field-row { grid-template-columns: 1fr; gap: 0; } .panel, .assessment { padding: 17px; } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/">Proofpath<span>.</span></a>
+      <nav aria-label="Organization workspace"><a id="jobs-link" href="/organization/onboarding">Organization jobs</a><a href="/jobs">Public jobs</a></nav>
+    </header>
+    <main>
+      <h1>Assessment library</h1>
+      <p>Prepare a task and scoring rubric for your hiring team. Published versions are frozen.</p>
+      <p class="note">Published versions are frozen. Candidates can consent, write one Python solution, and run a bounded server-authored test suite in an isolated workspace.</p>
+      <p id="message" role="status" aria-live="polite">Loading assessments…</p>
+      <section id="editor" class="panel" hidden aria-labelledby="form-title">
+        <h2 id="form-title">Create an assessment draft</h2>
+        <form id="assessment-form">
+          <label for="title">Assessment title</label>
+          <input id="title" name="title" minlength="3" maxlength="160" required />
+          <div class="field-row">
+            <div><label for="role">Role</label><input id="role" name="role_label" minlength="2" maxlength="80" required /></div>
+            <div><label for="type">Assessment type</label><select id="type" name="assessment_type"><option value="live_project_change">Live project change</option><option value="project_discussion">Project discussion</option></select></div>
+          </div>
+          <label for="duration">Duration in minutes</label>
+          <input id="duration" name="duration_minutes" type="number" min="15" max="240" value="60" required />
+          <label for="competencies">Competencies, one per line: name | target level (junior, mid, senior)</label>
+          <textarea id="competencies" required placeholder="Problem solving | mid&#10;Code quality | mid"></textarea>
+          <fieldset class="alignments">
+            <legend>Stable competency catalog links</legend>
+            <p>Optionally link each assessment competency to the Python/FastAPI catalog. This classifies the assessment; it does not create test evidence.</p>
+            <div id="competency-alignments"></div>
+          </fieldset>
+          <label for="instructions">Candidate task instructions</label>
+          <textarea id="instructions" name="task_instructions" minlength="40" maxlength="5000" required></textarea>
+          <label for="rubric">Scoring rubric, one per line: competency | criterion | description | weight percent (must total 100)</label>
+          <textarea id="rubric" required placeholder="Correctness | Meets the stated requirements | 60&#10;Communication | Explains tradeoffs clearly | 40"></textarea>
+          <label for="python-tests">Optional private Python test suite (JSON). Cases are hidden from candidates.</label>
+          <textarea id="python-tests" spellcheck="false" placeholder='{"entrypoint":"solve","cases":[{"competency_code":"python.language_fundamentals","arguments":{"values":[3,1,2]},"expected":[1,2,3]}]}'></textarea>
+          <fieldset class="tools">
+            <legend>Declared tools for a future assessment session</legend>
+            <label><input name="tool" type="checkbox" value="editor" checked /> Editor</label>
+            <label><input name="tool" type="checkbox" value="test_runner" /> Test runner</label>
+          </fieldset>
+          <button id="save" type="submit">Save draft</button>
+          <button id="cancel" type="button" class="secondary" hidden>Cancel edit</button>
+        </form>
+      </section>
+      <section aria-labelledby="list-title">
+        <h2 id="list-title">Organization assessments</h2>
+        <div id="assessment-list"></div>
+      </section>
+    </main>
+    <script>
+      const organizationId = new URLSearchParams(window.location.search).get("organization_id");
+      const base = `/api/v1/organizations/${encodeURIComponent(organizationId || "")}/assessments`;
+      const message = document.querySelector("#message");
+      const editor = document.querySelector("#editor");
+      const form = document.querySelector("#assessment-form");
+      const list = document.querySelector("#assessment-list");
+      const saveButton = document.querySelector("#save");
+      const cancelButton = document.querySelector("#cancel");
+      const competencyAlignments = document.querySelector("#competency-alignments");
+      let role = null;
+      let assessments = [];
+      let catalog = [];
+      let editing = null;
+      let requestKey = crypto.randomUUID();
+
+      function csrfToken() {
+        return document.cookie.split("; ").find((part) => part.startsWith("__Host-proofpath_csrf="))?.split("=").slice(1).join("=") || "";
+      }
+
+      async function api(method, path, body) {
+        const response = await fetch(path, {
+          method, credentials: "same-origin",
+          headers: { ...(body ? { "Content-Type": "application/json" } : {}), ...(method !== "GET" ? { "X-CSRF-Token": csrfToken() } : {}) },
+          ...(body ? { body: JSON.stringify(body) } : {}),
+        });
+        const result = response.status === 204 ? null : await response.json();
+        if (!response.ok) throw new Error(result?.detail || "The request could not be completed.");
+        return result;
+      }
+
+      function parseLines(id, fields, label) {
+        return document.querySelector(id).value.split("\n").map((line) => line.split("|").map((part) => part.trim())).filter((parts) => parts.some(Boolean)).map((parts) => {
+          if (parts.length !== fields || parts.some((part) => !part)) throw new Error(`${label} lines need ${fields} non-empty values separated by |.`);
+          return parts;
+        });
+      }
+
+      function definitionFromForm() {
+        const codes = [...competencyAlignments.querySelectorAll("select")].map((select) => select.value);
+        const competencies = parseLines("#competencies", 2, "Competency").map(([name, target_level], index) => ({
+          name, target_level: target_level.toLowerCase(), ...(codes[index] ? { competency_code: codes[index] } : {}),
+        }));
+        const rubric_criteria = parseLines("#rubric", 4, "Rubric").map(([competency_name, name, description, weight_percent]) => ({ competency_name, name, description, weight_percent: Number(weight_percent) }));
+        return {
+          title: form.elements.namedItem("title").value,
+          role_label: form.elements.namedItem("role_label").value,
+          assessment_type: form.elements.namedItem("assessment_type").value,
+          duration_minutes: Number(form.elements.namedItem("duration_minutes").value),
+          competencies,
+          task_instructions: form.elements.namedItem("task_instructions").value,
+          rubric_criteria,
+          allowed_tools: [...form.querySelectorAll('input[name="tool"]:checked')].map((input) => input.value),
+          ...(document.querySelector("#python-tests").value.trim() ? { python_test_suite: JSON.parse(document.querySelector("#python-tests").value) } : {}),
+        };
+      }
+
+      function renderCompetencyAlignments(selectedCodes = []) {
+        competencyAlignments.replaceChildren();
+        let entries;
+        try { entries = parseLines("#competencies", 2, "Competency"); }
+        catch { competencyAlignments.textContent = "Complete each competency line to choose its catalog link."; return; }
+        for (const [index, [name]] of entries.entries()) {
+          const item = document.createElement("div");
+          item.className = "alignment";
+          const label = document.createElement("label");
+          const select = document.createElement("select");
+          select.id = `competency-alignment-${index}`;
+          const none = document.createElement("option");
+          none.value = "";
+          none.textContent = "No catalog link";
+          select.append(none);
+          for (const competency of catalog) {
+            const option = document.createElement("option");
+            option.value = competency.code;
+            option.textContent = competency.name;
+            select.append(option);
+          }
+          select.value = selectedCodes[index] || "";
+          label.htmlFor = select.id;
+          label.textContent = `Stable catalog competency for ${name}`;
+          item.append(label, select);
+          competencyAlignments.append(item);
+        }
+        if (!entries.length) competencyAlignments.textContent = "Enter the assessment competencies above to optionally link them.";
+      }
+
+      function resetForm() {
+        editing = null;
+        form.reset();
+        document.querySelector("#python-tests").value = "";
+        document.querySelector("#form-title").textContent = "Create an assessment draft";
+        saveButton.textContent = "Save draft";
+        cancelButton.hidden = true;
+        renderCompetencyAlignments();
+      }
+
+      function render() {
+        list.replaceChildren();
+        if (!assessments.length) {
+          const empty = document.createElement("p");
+          empty.textContent = "No assessments in this organization yet.";
+          list.append(empty);
+          return;
+        }
+        for (const assessment of assessments) {
+          const card = document.createElement("article");
+          card.className = "assessment";
+          const top = document.createElement("div");
+          top.className = "card-top";
+          const title = document.createElement("h3");
+          title.textContent = assessment.title;
+          const status = document.createElement("span");
+          status.className = "status";
+          status.textContent = assessment.status;
+          top.append(title, status);
+          const detail = document.createElement("p");
+          detail.textContent = `${assessment.role_label} · ${assessment.duration_minutes} minutes · version ${assessment.version}`;
+          card.append(top, detail);
+          if (assessment.published_version) {
+            const frozen = document.createElement("p");
+            frozen.textContent = `Published version ${assessment.published_version} is frozen.`;
+            card.append(frozen);
+          }
+          if (["owner", "admin", "recruiter"].includes(role) && assessment.status === "draft") {
+            const edit = document.createElement("button");
+            edit.type = "button";
+            edit.className = "secondary";
+            edit.textContent = "Edit draft";
+            edit.addEventListener("click", () => startEdit(assessment).catch((error) => {
+              message.dataset.kind = "error";
+              message.textContent = error.message;
+            }));
+            card.append(edit);
+            if (["owner", "admin"].includes(role)) {
+              const review = document.createElement("label");
+              const confirmation = document.createElement("input");
+              confirmation.type = "checkbox";
+              confirmation.className = "review-confirmation";
+              review.append(confirmation, document.createTextNode(" I reviewed this task and its weighted rubric."));
+              const publish = document.createElement("button");
+              publish.type = "button";
+              publish.textContent = "Publish reviewed version";
+              publish.disabled = true;
+              confirmation.addEventListener("change", () => { publish.disabled = !confirmation.checked; });
+              publish.addEventListener("click", () => transition(assessment, publish));
+              card.append(review, publish);
+            }
+          }
+          list.append(card);
+        }
+      }
+
+      async function startEdit(item) {
+        editing = await api("GET", `${base}/${encodeURIComponent(item.id)}`);
+        const definition = editing.definition;
+        form.elements.namedItem("title").value = definition.title;
+        form.elements.namedItem("role_label").value = definition.role_label;
+        form.elements.namedItem("assessment_type").value = definition.assessment_type;
+        form.elements.namedItem("duration_minutes").value = definition.duration_minutes;
+        document.querySelector("#competencies").value = definition.competencies.map((item) => `${item.name} | ${item.target_level}`).join("\n");
+        renderCompetencyAlignments(definition.competencies.map((item) => item.competency_code || ""));
+        form.elements.namedItem("task_instructions").value = definition.task_instructions;
+        document.querySelector("#rubric").value = definition.rubric_criteria.map((item) => `${item.competency_name} | ${item.name} | ${item.description} | ${item.weight_percent}`).join("\n");
+        for (const input of form.querySelectorAll('input[name="tool"]')) input.checked = definition.allowed_tools.includes(input.value);
+        document.querySelector("#python-tests").value = definition.python_test_suite ? JSON.stringify(definition.python_test_suite, null, 2) : "";
+        document.querySelector("#form-title").textContent = "Edit assessment draft";
+        saveButton.textContent = "Save changes";
+        cancelButton.hidden = false;
+        form.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      async function reload() {
+        const result = await api("GET", `${base}?limit=50&offset=0`);
+        assessments = result.assessments;
+        render();
+      }
+
+      async function transition(assessment, button) {
+        button.disabled = true;
+        try {
+          await api("POST", `${base}/${encodeURIComponent(assessment.id)}/publish`, {
+            expected_version: assessment.version,
+            review_confirmation: "assessment-review-v1",
+          });
+          await reload();
+          message.dataset.kind = "success";
+          message.textContent = "Assessment version published and frozen. Candidates can now be invited; publishing does not start a session.";
+        } catch (error) { message.dataset.kind = "error"; message.textContent = error.message; }
+        finally { button.disabled = false; }
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        saveButton.disabled = true;
+        try {
+          const definition = definitionFromForm();
+          if (editing) await api("PATCH", `${base}/${encodeURIComponent(editing.id)}`, { expected_version: editing.version, definition });
+          else await api("POST", base, { request_key: requestKey, definition });
+          await reload();
+          if (!editing) requestKey = crypto.randomUUID();
+          resetForm();
+          message.dataset.kind = "success";
+          message.textContent = "Assessment draft saved.";
+        } catch (error) { message.dataset.kind = "error"; message.textContent = error.message; }
+        finally { saveButton.disabled = false; }
+      });
+
+      cancelButton.addEventListener("click", resetForm);
+      document.querySelector("#competencies").addEventListener("input", () => {
+        renderCompetencyAlignments([...competencyAlignments.querySelectorAll("select")].map((select) => select.value));
+      });
+
+      async function load() {
+        if (!organizationId) throw new Error("Choose an organization workspace first.");
+        const organization = await api("GET", `/api/v1/organizations/${encodeURIComponent(organizationId)}`);
+        role = organization.member_role;
+        catalog = (await api("GET", "/api/v1/competencies?track=python-fastapi-backend")).competencies;
+        renderCompetencyAlignments();
+        editor.hidden = !["owner", "admin", "recruiter"].includes(role);
+        document.querySelector("#jobs-link").href = `/organization/jobs?organization_id=${encodeURIComponent(organizationId)}`;
+        await reload();
+        message.textContent = "Assessments loaded.";
+      }
+
+      load().catch((error) => {
+        message.dataset.kind = "error";
+        message.textContent = error.message === "Sign in to continue." ? "Sign in to manage organization assessments." : error.message;
+      });
+    </script>
+  </body>
+</html>

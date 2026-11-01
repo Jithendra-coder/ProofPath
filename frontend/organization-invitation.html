@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <title>Accept organization invitation · Proofpath</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/auth.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <section class="form-panel" aria-labelledby="page-title">
+        <a class="brand" href="/" aria-label="Proofpath home">Proofpath<span>.</span></a>
+        <div class="content">
+          <span class="eyebrow">Organization workspace</span>
+          <h1 id="page-title">Accept your invitation</h1>
+          <p class="intro">Sign in with the verified email address that received the invitation. Your access will be limited to the organization named in that invitation.</p>
+          <p id="message" class="message" role="status" aria-live="polite">Checking your invitation…</p>
+          <p id="login-link" hidden><a class="text-link" href="/login" target="_blank" rel="noopener noreferrer">Open sign in in a new tab</a>, then return here.</p>
+          <button id="accept" type="button" disabled>Accept invitation</button>
+          <p id="workspace-link" hidden><a class="text-link" href="#">Open organization workspace</a></p>
+        </div>
+      </section>
+      <aside class="aside" aria-label="About Proofpath">
+        <div class="aside-copy">
+          <span class="eyebrow">One identity, scoped access</span>
+          <h2>Join your team.</h2>
+          <p>Your role applies only to the organization that invited you.</p>
+        </div>
+      </aside>
+    </main>
+    <script>
+      const message = document.querySelector("#message");
+      const acceptButton = document.querySelector("#accept");
+      const loginLink = document.querySelector("#login-link");
+      const workspaceLink = document.querySelector("#workspace-link");
+      let token = new URLSearchParams(window.location.hash.slice(1)).get("token");
+
+      function showError(error) {
+        message.dataset.kind = "error";
+        message.textContent = error.message || "The invitation could not be accepted.";
+      }
+
+      function csrfToken() {
+        return document.cookie.split("; ").find((part) => part.startsWith("__Host-proofpath_csrf="))?.split("=").slice(1).join("=") || "";
+      }
+
+      async function checkSession() {
+        const response = await fetch("/api/v1/auth/session", { credentials: "same-origin" });
+        if (response.status === 401) {
+          loginLink.hidden = false;
+          message.textContent = token
+            ? "Sign in with the invited email in a new tab, then return here to accept."
+            : "Open the original invitation link to continue.";
+          acceptButton.disabled = true;
+          return;
+        }
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.detail || "Could not verify your session.");
+        loginLink.hidden = true;
+        acceptButton.disabled = !token;
+        message.textContent = token ? "Review the invitation and accept to join." : "This invitation link is missing its token.";
+      }
+
+      acceptButton.addEventListener("click", async () => {
+        if (!token) return;
+        acceptButton.disabled = true;
+        try {
+          const response = await fetch("/api/v1/organization-invitations/accept", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken() },
+            body: JSON.stringify({ token }),
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.detail || "The invitation could not be accepted.");
+          token = null;
+          history.replaceState(null, "", window.location.pathname);
+          message.dataset.kind = "success";
+          message.textContent = `You joined ${result.organization_name} as ${result.member_role}.`;
+          const link = workspaceLink.querySelector("a");
+          link.href = `/organization/onboarding?organization_id=${encodeURIComponent(result.organization_id)}`;
+          workspaceLink.hidden = false;
+        } catch (error) {
+          showError(error);
+          acceptButton.disabled = false;
+        }
+      });
+
+      window.addEventListener("focus", () => checkSession().catch(showError));
+      checkSession().catch(showError);
+    </script>
+  </body>
+</html>

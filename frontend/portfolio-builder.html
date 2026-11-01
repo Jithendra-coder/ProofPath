@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <title>Portfolio builder · Proofpath</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root { color-scheme: light; font: 15px/1.55 Inter, sans-serif; color: #1f2937; background: #fff; }
+      * { box-sizing: border-box; }
+      body { margin: 0; }
+      header { min-height: 66px; display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 12px max(20px, calc((100vw - 1240px) / 2)); border-bottom: 1px solid #e5e7eb; background: #fff; }
+      .brand { color: #1f2937; font: 700 20px Manrope, sans-serif; text-decoration: none; }
+      .brand span { color: #c8422c; }
+      nav { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; }
+      nav a, a { color: #0f3d3e; font-weight: 600; }
+      nav a { text-decoration: none; }
+      main { width: min(100% - 32px, 1240px); margin: 30px auto 64px; }
+      .page-heading { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+      .eyebrow { margin: 0 0 6px; color: #0f3d3e; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+      h1, h2, h3 { font-family: Manrope, sans-serif; }
+      h1 { margin: 0; font-size: clamp(28px, 4vw, 38px); line-height: 1.2; }
+      h2 { margin: 0 0 12px; font-size: 20px; }
+      h3 { margin: 0; font-size: 17px; }
+      p { color: #5a6573; }
+      .page-copy { max-width: 670px; margin: 8px 0 0; }
+      .status { min-height: 24px; margin: 8px 0 14px; }
+      .status[data-kind="error"] { color: #b42318; }
+      .status[data-kind="success"] { color: #0f3d3e; }
+      .notice, .panel { padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; }
+      .notice { margin-bottom: 18px; border-left: 4px solid #0f3d3e; background: #f7fbfa; }
+      .builder-grid { display: grid; grid-template-columns: minmax(260px, 350px) minmax(0, 1fr); align-items: start; gap: 18px; }
+      .controls { display: grid; gap: 14px; }
+      .control-group { display: grid; gap: 8px; }
+      label, legend { color: #1f2937; font-weight: 600; }
+      select { width: 100%; min-height: 42px; padding: 8px 10px; border: 1px solid #c6cdd3; border-radius: 7px; background: white; color: #1f2937; font: inherit; }
+      select:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid #0f3d3e; outline-offset: 3px; }
+      .hint { margin: 0; color: #5a6573; font-size: 13px; }
+      fieldset { min-width: 0; padding: 0; margin: 0; border: 0; }
+      .theme-options { display: grid; gap: 7px; }
+      .theme-choice { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border: 1px solid #e5e7eb; border-radius: 8px; }
+      .theme-choice input { accent-color: #c8422c; }
+      .swatch { width: 18px; height: 18px; border: 1px solid #c6cdd3; border-radius: 5px; }
+      .swatch--coral { background: #c8422c; }
+      .swatch--teal { background: #0f3d3e; }
+      .swatch--ink { background: #1f2937; }
+      .section-list { display: grid; gap: 7px; padding: 0; margin: 0; list-style: none; }
+      .section-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 9px; border: 1px solid #e5e7eb; border-radius: 8px; }
+      .section-row label { display: flex; align-items: center; gap: 8px; }
+      .section-actions { display: flex; gap: 5px; }
+      button { min-height: 38px; padding: 7px 11px; border: 1px solid #c6cdd3; border-radius: 7px; background: white; color: #1f2937; font: 600 14px Inter, sans-serif; cursor: pointer; }
+      button:hover:not(:disabled) { background: #f7f8f8; }
+      button:disabled { cursor: not-allowed; opacity: .55; }
+      button.primary { border-color: #c8422c; background: #c8422c; color: white; }
+      button.primary:hover:not(:disabled) { background: #a93424; }
+      .actions { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 4px; }
+      .preview-panel { min-width: 0; }
+      .preview-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+      .viewport-switch { display: flex; flex-wrap: wrap; gap: 6px; }
+      .viewport-switch button[aria-pressed="true"] { border-color: #0f3d3e; background: #eaf6f2; color: #0f3d3e; }
+      .preview-frame { width: 100%; min-height: 460px; padding: 16px; margin: auto; overflow: auto; border: 1px solid #d9dee4; border-radius: 12px; background: #f7f8f8; transition: max-width .15s ease; }
+      .preview-frame[data-viewport="tablet"] { max-width: 760px; }
+      .preview-frame[data-viewport="mobile"] { max-width: 390px; min-height: 620px; }
+      #preview-content { width: 100%; min-height: 420px; padding: clamp(14px, 3vw, 28px); border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; }
+      .version-list { display: grid; gap: 8px; padding: 0; margin: 0; list-style: none; }
+      .version-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 10px; border: 1px solid #e5e7eb; border-radius: 8px; }
+      .version-meta { color: #5a6573; font-size: 13px; }
+      .version-label { display: block; color: #1f2937; font-weight: 600; }
+      [hidden] { display: none !important; }
+      .legacy-screen--shell header { border: 0; }
+      @media (max-width: 800px) { .builder-grid { grid-template-columns: 1fr; } .preview-frame { min-height: 400px; } }
+      @media (max-width: 540px) { header { align-items: flex-start; flex-direction: column; } nav { gap: 10px 16px; } main { margin-top: 22px; } .notice, .panel { padding: 16px; } .preview-frame { padding: 8px; } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/">Proofpath<span>.</span></a>
+      <nav aria-label="Workspace">
+        <a href="/candidate/dashboard">Overview</a>
+        <a href="/projects">Projects</a>
+        <a href="/jobs">Find jobs</a>
+        <a href="/applications">Applications</a>
+      </nav>
+    </header>
+    <main>
+      <div class="page-heading">
+        <div>
+          <p class="eyebrow">Candidate Pro · Portfolio</p>
+          <h1>Portfolio builder</h1>
+          <p class="page-copy">Choose a professional layout, arrange the sections you want to show, and preview the result before publishing it.</p>
+        </div>
+        <a href="/projects">Manage profile and project visibility</a>
+      </div>
+      <p id="status" class="status" role="status" aria-live="polite">Loading your portfolio…</p>
+      <section id="locked" class="notice" hidden aria-labelledby="locked-title">
+        <h2 id="locked-title">Portfolio customization is a Pro feature</h2>
+        <p id="locked-copy">Your free profile, project sharing, job applications, and assessments remain available. Pro plans are not yet available in this preview.</p>
+        <a href="/projects">Continue with your free profile</a>
+      </section>
+      <div id="builder" class="builder-grid" hidden>
+        <aside class="controls">
+          <section class="panel" aria-labelledby="design-title">
+            <h2 id="design-title">Design</h2>
+            <div class="control-group">
+              <label for="template-key">Template</label>
+              <select id="template-key">
+                <option value="editorial">Editorial · spacious profile first</option>
+                <option value="engineer">Engineer · details beside selected work</option>
+                <option value="case-study">Case study · projects lead</option>
+                <option value="compact-resume">Compact resume · concise single column</option>
+              </select>
+              <p id="template-description" class="hint"></p>
+            </div>
+            <fieldset class="control-group">
+              <legend>Color theme</legend>
+              <div class="theme-options">
+                <label class="theme-choice"><input type="radio" name="theme-key" value="coral" /><span class="swatch swatch--coral" aria-hidden="true"></span>Coral</label>
+                <label class="theme-choice"><input type="radio" name="theme-key" value="teal" /><span class="swatch swatch--teal" aria-hidden="true"></span>Deep teal</label>
+                <label class="theme-choice"><input type="radio" name="theme-key" value="ink" /><span class="swatch swatch--ink" aria-hidden="true"></span>Ink</label>
+              </div>
+            </fieldset>
+          </section>
+          <section class="panel" aria-labelledby="sections-title">
+            <h2 id="sections-title">Sections</h2>
+            <p class="hint">Use the move buttons to set reading order. Hidden sections stay in your profile and can be added back.</p>
+            <ul id="section-list" class="section-list" aria-label="Portfolio section order"></ul>
+          </section>
+          <section class="panel" aria-labelledby="publish-title">
+            <h2 id="publish-title">Save and publish</h2>
+            <p id="publish-help" class="hint"></p>
+            <div class="actions">
+              <button id="save-draft" type="button">Save draft</button>
+              <button id="publish-design" class="primary" type="button">Publish design</button>
+            </div>
+            <p id="public-url" class="hint"></p>
+          </section>
+          <section class="panel" aria-labelledby="versions-title">
+            <h2 id="versions-title">Version history</h2>
+            <ul id="version-list" class="version-list"></ul>
+          </section>
+        </aside>
+        <section class="panel preview-panel" aria-labelledby="preview-title">
+          <div class="preview-heading">
+            <h2 id="preview-title">Live preview</h2>
+            <div class="viewport-switch" role="group" aria-label="Preview size">
+              <button type="button" data-viewport="desktop" aria-pressed="true">Desktop</button>
+              <button type="button" data-viewport="tablet" aria-pressed="false">Tablet</button>
+              <button type="button" data-viewport="mobile" aria-pressed="false">Mobile</button>
+            </div>
+          </div>
+          <div id="preview-frame" class="preview-frame" data-viewport="desktop">
+            <div id="preview-content"></div>
+          </div>
+        </section>
+      </div>
+      <section id="signed-out" class="notice" hidden aria-labelledby="signed-out-title">
+        <h2 id="signed-out-title">Sign in to use the portfolio builder</h2>
+        <a href="/login">Sign in</a>
+      </section>
+    </main>
+    <script src="/portfolio-renderer.js"></script>
+    <script>
+      const status = document.querySelector("#status");
+      const builder = document.querySelector("#builder");
+      const locked = document.querySelector("#locked");
+      const signedOut = document.querySelector("#signed-out");
+      const templateInput = document.querySelector("#template-key");
+      const templateDescription = document.querySelector("#template-description");
+      const sectionList = document.querySelector("#section-list");
+      const previewFrame = document.querySelector("#preview-frame");
+      const previewContent = document.querySelector("#preview-content");
+      const versionList = document.querySelector("#version-list");
+      const saveDraftButton = document.querySelector("#save-draft");
+      const publishButton = document.querySelector("#publish-design");
+      const publishHelp = document.querySelector("#publish-help");
+      const publicUrl = document.querySelector("#public-url");
+      const templateCopy = {
+        editorial: "A spacious introduction followed by clearly separated sections.",
+        engineer: "Profile details sit beside a focused work area.",
+        "case-study": "Selected projects lead, with profile details supporting the work.",
+        "compact-resume": "A concise single-column layout for quick scanning."
+      };
+      const sectionLabels = { roles: "Target roles", skills: "Skills", projects: "Selected work" };
+      const defaultDesign = { template_key: "editorial", theme_key: "coral", sections: ["roles", "skills", "projects"] };
+      let entitlement = { portfolio_customization: false };
+      let portfolio = null;
+      let candidateProfile = null;
+      let versions = { draft_version_id: null, published_version_id: null, versions: [] };
+      let design = { ...defaultDesign, sections: [...defaultDesign.sections] };
+      let editable = false;
+
+      function csrfToken() {
+        return document.cookie.split("; ").find((part) => part.startsWith("__Host-proofpath_csrf="))?.split("=").slice(1).join("=") || "";
+      }
+
+      async function api(method, path, body) {
+        const response = await fetch(path, {
+          method,
+          credentials: "same-origin",
+          cache: "no-store",
+          headers: { ...(body ? { "Content-Type": "application/json" } : {}), ...(method !== "GET" ? { "X-CSRF-Token": csrfToken() } : {}) },
+          ...(body ? { body: JSON.stringify(body) } : {})
+        });
+        const result = response.status === 204 ? null : await response.json();
+        if (!response.ok) throw Object.assign(new Error(result?.detail || "The request could not be completed."), { code: result?.code, status: response.status });
+        return result;
+      }
+
+      function setStatus(text, kind) {
+        status.textContent = text;
+        status.dataset.kind = kind || "";
+      }
+
+      function updateDesign() {
+        design.template_key = templateInput.value;
+        design.theme_key = document.querySelector('input[name="theme-key"]:checked')?.value || "coral";
+        templateDescription.textContent = templateCopy[design.template_key];
+        window.ProofpathPortfolioRenderer.render(previewContent, {
+          display_name: candidateProfile?.full_name || "Your name",
+          target_roles: candidateProfile?.target_roles || [],
+          skills: candidateProfile?.skills || [],
+          projects: (portfolio?.projects || []).filter((item) => item.visibility === "public").map((item) => ({
+            name: item.name, problem_statement: item.problem_statement, contribution: item.contribution,
+            technologies: item.technologies, source_links: item.source_links.map((link) => link.url)
+          }))
+        }, design);
+        renderSections();
+      }
+
+      function renderSections() {
+        sectionList.replaceChildren();
+        const allSections = ["roles", "skills", "projects"];
+        const orderedSections = [...design.sections, ...allSections.filter((key) => !design.sections.includes(key))];
+        for (const section of orderedSections) {
+          const index = design.sections.indexOf(section);
+          const visible = index !== -1;
+          const row = document.createElement("li");
+          row.className = "section-row";
+          const label = document.createElement("label");
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.checked = visible;
+          checkbox.disabled = !editable || (visible && design.sections.length === 1);
+          checkbox.addEventListener("change", () => {
+            design.sections = checkbox.checked ? [...design.sections, section] : design.sections.filter((key) => key !== section);
+            updateDesign();
+          });
+          label.append(checkbox, document.createTextNode(sectionLabels[section]));
+          row.append(label);
+          const actions = document.createElement("span");
+          actions.className = "section-actions";
+          for (const [direction, glyph, disabled] of [[-1, "Move up", index <= 0], [1, "Move down", !visible || index === design.sections.length - 1]]) {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.textContent = direction < 0 ? "↑" : "↓";
+            button.setAttribute("aria-label", `${glyph} ${sectionLabels[section]}`);
+            button.disabled = !editable || !visible || disabled;
+            button.addEventListener("click", () => {
+              const moved = [...design.sections];
+              [moved[index], moved[index + direction]] = [moved[index + direction], moved[index]];
+              design.sections = moved;
+              updateDesign();
+            });
+            actions.append(button);
+          }
+          row.append(actions);
+          sectionList.append(row);
+        }
+      }
+
+      function renderVersions() {
+        versionList.replaceChildren();
+        if (!versions.versions.length) {
+          const empty = document.createElement("li");
+          empty.className = "version-meta";
+          empty.textContent = "No saved versions yet.";
+          versionList.append(empty);
+          return;
+        }
+        for (const version of versions.versions) {
+          const row = document.createElement("li");
+          row.className = "version-row";
+          const text = document.createElement("span");
+          text.className = "version-meta";
+          const label = document.createElement("span");
+          label.className = "version-label";
+          label.textContent = `Version ${version.version_number}${version.is_published ? " · Published" : version.is_draft ? " · Draft" : ""}`;
+          const detail = document.createElement("span");
+          detail.textContent = `${version.template_key} · ${version.theme_key}`;
+          text.append(label, detail);
+          row.append(text);
+          if (editable && !version.is_published) {
+            const rollback = document.createElement("button");
+            rollback.type = "button";
+            rollback.textContent = "Publish version";
+            rollback.addEventListener("click", () => publishVersion(version.id));
+            row.append(rollback);
+          }
+          versionList.append(row);
+        }
+      }
+
+      function applyVersion(version) {
+        design = version ? {
+          template_key: version.template_key,
+          theme_key: version.theme_key,
+          sections: [...version.sections]
+        } : { ...defaultDesign, sections: [...defaultDesign.sections] };
+        templateInput.value = design.template_key;
+        document.querySelector(`input[name="theme-key"][value="${design.theme_key}"]`).checked = true;
+        updateDesign();
+      }
+
+      function updatePlanUI() {
+        const hasSavedWork = versions.versions.length > 0;
+        if (!entitlement.portfolio_customization && !hasSavedWork) {
+          locked.hidden = false;
+          builder.hidden = true;
+          publishButton.disabled = true;
+          saveDraftButton.disabled = true;
+          return;
+        }
+        builder.hidden = false;
+        locked.hidden = true;
+        editable = entitlement.portfolio_customization;
+        document.querySelectorAll("#template-key, input[name='theme-key']").forEach((control) => { control.disabled = !editable; });
+        saveDraftButton.disabled = !editable;
+        publishButton.disabled = !editable || !versions.draft_version_id || !portfolio?.published_at;
+        publishHelp.textContent = editable
+          ? portfolio?.published_at ? "Publishing replaces the public design. Your previous version stays in history." : "Publish your free profile from Projects before publishing a premium design."
+          : "Your Pro settings and version history are saved. The public profile uses the Free presentation while Pro is inactive.";
+        publicUrl.replaceChildren();
+        if (portfolio?.public_handle) {
+          const link = document.createElement("a");
+          link.href = `/u/${encodeURIComponent(portfolio.public_handle)}`;
+          link.textContent = `${window.location.origin}/u/${encodeURIComponent(portfolio.public_handle)}`;
+          publicUrl.append("Public profile: ", link);
+        }
+      }
+
+      async function reloadBuilder() {
+        [entitlement, versions, portfolio, candidateProfile] = await Promise.all([
+          api("GET", "/api/v1/me/entitlements"),
+          api("GET", "/api/v1/me/portfolio/versions"),
+          api("GET", "/api/v1/me/portfolio"),
+          api("GET", "/api/v1/me/candidate/onboarding")
+        ]);
+        updatePlanUI();
+        const draft = versions.versions.find((version) => version.id === versions.draft_version_id);
+        applyVersion(draft || versions.versions[0]);
+        renderVersions();
+        setStatus(entitlement.portfolio_customization ? "Portfolio builder ready." : "Pro customization is inactive.");
+      }
+
+      async function publishVersion(versionId) {
+        publishButton.disabled = true;
+        try {
+          await api("POST", "/api/v1/me/portfolio/publish", { consent_version: "public-portfolio-v1", draft_version_id: versionId });
+          await reloadBuilder();
+          setStatus("The portfolio design is published.", "success");
+        } catch (error) { setStatus(error.message, "error"); }
+      }
+
+      templateInput.addEventListener("change", updateDesign);
+      document.querySelectorAll('input[name="theme-key"]').forEach((input) => input.addEventListener("change", updateDesign));
+      document.querySelectorAll("[data-viewport]").forEach((button) => button.addEventListener("click", () => {
+        previewFrame.dataset.viewport = button.dataset.viewport;
+        document.querySelectorAll(".viewport-switch button").forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
+      }));
+      saveDraftButton.addEventListener("click", async () => {
+        saveDraftButton.disabled = true;
+        try {
+          const latest = versions.versions.find((version) => version.id === versions.draft_version_id);
+          await api("POST", "/api/v1/me/portfolio/versions", {
+            expected_draft_version: latest?.version_number || 0,
+            design
+          });
+          await reloadBuilder();
+          setStatus("Draft saved. Your current public design is unchanged.", "success");
+        } catch (error) { setStatus(error.message, "error"); }
+        finally { saveDraftButton.disabled = !entitlement.portfolio_customization; }
+      });
+      publishButton.addEventListener("click", () => {
+        const draft = versions.versions.find((version) => version.id === versions.draft_version_id);
+        if (draft && window.confirm("Publish this design to your public profile?")) publishVersion(draft.id);
+      });
+
+      reloadBuilder().catch((error) => {
+        status.hidden = true;
+        if (error.status === 401) signedOut.hidden = false;
+        else if (error.status === 403) { locked.hidden = false; }
+        else setStatus(error.message, "error");
+      });
+    </script>
+  </body>
+</html>

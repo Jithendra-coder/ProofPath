@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <title>Assessment workspace · Proofpath</title>
+    <style>
+      :root { color-scheme: light; font: 16px/1.55 Inter, system-ui, sans-serif; color: #111827; background: #f8f9ff; }
+      * { box-sizing: border-box; }
+      body { margin: 0; }
+      header { padding: 16px max(24px, calc((100vw - 980px) / 2)); background: #fff; border-bottom: 1px solid #e5e7eb; }
+      main { width: min(100% - 32px, 980px); margin: 40px auto; }
+      h1, h2 { font-family: Manrope, Inter, sans-serif; letter-spacing: -.035em; }
+      a { color: #0f3d3e; font-weight: 600; }
+      .brand { color: #111827; text-decoration: none; font: 700 22px Manrope, Inter, sans-serif; }
+      .brand span { color: #a62a16; }
+      section { padding: 22px; margin: 18px 0; border: 1px solid #e5e7eb; border-radius: 12px; background: white; }
+      textarea { display: block; width: 100%; min-height: 360px; padding: 14px; border: 1px solid #aeb8bf; border-radius: 8px; background: #101b25; color: #eff6fb; font: 14px/1.5 ui-monospace, Consolas, monospace; tab-size: 4; }
+      button { min-height: 42px; margin: 12px 8px 0 0; padding: 9px 13px; border: 0; border-radius: 8px; background: #a62a16; color: white; font: 600 14px Inter, sans-serif; cursor: pointer; }
+      button.secondary { background: #eaf6f2; color: #174b49; }
+      button:disabled { opacity: .65; }
+      button:focus-visible, a:focus-visible, textarea:focus-visible { outline: 2px solid #0f3d3e; outline-offset: 2px; }
+      .note { padding: 12px 14px; border-left: 3px solid #a62a16; background: #fff8f6; }
+      .result { padding: 12px; margin: 10px 0; border: 1px solid #d7e3df; border-radius: 8px; background: #f6fbf8; }
+      #message[data-kind="error"] { color: #b42318; }
+      @media (max-width: 640px) { section { padding: 16px; } textarea { min-height: 280px; } }
+    </style>
+  </head>
+  <body>
+    <header><a class="brand" href="/">Proofpath<span>.</span></a></header>
+    <main>
+      <a href="/applications">← My applications</a>
+      <h1 id="title">Python assessment</h1>
+      <p id="message" role="status" aria-live="polite">Loading your private workspace…</p>
+      <section>
+        <h2>Task</h2>
+        <p id="instructions"></p>
+        <p class="note">Your solution is private to you and the assessment service. Test cases and expected answers remain hidden. Code runs in a fresh, no-network container with resource limits; no audio, video, screen, or transcript is recorded.</p>
+        <label for="source">Python solution</label>
+        <textarea id="source" spellcheck="false" autocomplete="off" autocapitalize="off" aria-describedby="entrypoint"></textarea>
+        <p id="entrypoint"></p>
+        <button id="save" class="secondary" type="button">Save solution</button>
+        <button id="run" type="button">Save and run private tests</button>
+      </section>
+      <section aria-labelledby="results-title">
+        <h2 id="results-title">Deterministic test results</h2>
+        <div id="results"><p>Run the test suite to see per-competency outcomes.</p></div>
+        <p>Passing tests are stored as candidate-only evidence with assessment version and run provenance. An employer must receive your separate permission before reviewing it.</p>
+      </section>
+    </main>
+    <script>
+      const attemptId = new URLSearchParams(location.search).get("attempt_id");
+      const message = document.querySelector("#message");
+      const source = document.querySelector("#source");
+      const saveButton = document.querySelector("#save");
+      const runButton = document.querySelector("#run");
+      const results = document.querySelector("#results");
+      let workspace = null;
+
+      function csrfToken() {
+        return document.cookie.split("; ").find((part) => part.startsWith("__Host-proofpath_csrf="))?.split("=").slice(1).join("=") || "";
+      }
+
+      async function api(method, path, body) {
+        const response = await fetch(path, {
+          method, credentials: "same-origin",
+          headers: { ...(body ? { "Content-Type": "application/json" } : {}), ...(method !== "GET" ? { "X-CSRF-Token": csrfToken() } : {}) },
+          ...(body ? { body: JSON.stringify(body) } : {}),
+        });
+        const data = response.status === 204 ? null : await response.json();
+        if (!response.ok) throw new Error(data?.detail || "The request could not be completed.");
+        return data;
+      }
+
+      function renderRun(run) {
+        results.replaceChildren();
+        const summary = document.createElement("p");
+        summary.textContent = run.status === "cancelled"
+          ? "The assessment ended while this run was in progress. No new evidence was recorded."
+          : run.status === "infrastructure_failed"
+          ? "The isolated runtime could not complete this run. No result was recorded as candidate evidence."
+          : run.status === "timed_out" ? "The run reached its time limit. Review your solution and try again."
+          : run.status === "passed" ? "All private deterministic cases passed. This is evidence for these cases, not an overall hiring decision."
+          : "Some private deterministic cases did not pass. Expected answers and hidden cases are not shown.";
+        results.append(summary);
+        for (const item of run.competency_results) {
+          const row = document.createElement("p");
+          row.className = "result";
+          row.textContent = `${item.competency_code.replaceAll(".", " · ")} — ${item.status}; ${item.passed_cases} of ${item.total_cases} cases passed`;
+          results.append(row);
+        }
+      }
+
+      async function load() {
+        if (!attemptId) throw new Error("Open this page from one of your assessment invitations.");
+        workspace = await api("GET", `/api/v1/attempts/${encodeURIComponent(attemptId)}/workspace`);
+        document.querySelector("#title").textContent = workspace.assessment_title;
+        document.querySelector("#instructions").textContent = workspace.task_instructions;
+        document.querySelector("#entrypoint").textContent = `Implement a function named ${workspace.python_entrypoint}(...)`;
+        source.value = workspace.source_code || `def ${workspace.python_entrypoint}():\n    # Implement the task described above.\n    pass\n`;
+        message.dataset.kind = "success";
+        message.textContent = `Private workspace · revision ${workspace.version}${workspace.version ? "" : " · not saved"}`;
+      }
+
+      async function save() {
+        if (!workspace) throw new Error("The workspace is still loading.");
+        const saved = await api("PUT", `/api/v1/attempts/${encodeURIComponent(attemptId)}/workspace`, {
+          expected_version: workspace.version,
+          source_code: source.value,
+        });
+        workspace = saved;
+        message.dataset.kind = "success";
+        message.textContent = `Solution saved · revision ${workspace.version}`;
+      }
+
+      saveButton.addEventListener("click", async () => {
+        saveButton.disabled = true;
+        try { await save(); }
+        catch (error) { message.dataset.kind = "error"; message.textContent = error.message; }
+        finally { saveButton.disabled = false; }
+      });
+
+      runButton.addEventListener("click", async () => {
+        runButton.disabled = true;
+        saveButton.disabled = true;
+        results.textContent = "Saving and running isolated tests…";
+        try {
+          await save();
+          const run = await api("POST", `/api/v1/attempts/${encodeURIComponent(attemptId)}/test-runs`, {
+            expected_workspace_version: workspace.version,
+            request_key: crypto.randomUUID(),
+          });
+          renderRun(run);
+          message.dataset.kind = run.status === "infrastructure_failed" ? "error" : "success";
+          message.textContent = `Run ${run.id} · ${run.status}`;
+        } catch (error) {
+          message.dataset.kind = "error";
+          message.textContent = error.message;
+          results.textContent = "No new test result was recorded.";
+        } finally { runButton.disabled = false; saveButton.disabled = false; }
+      });
+
+      load().catch((error) => { message.dataset.kind = "error"; message.textContent = error.message; });
+    </script>
+  </body>
+</html>

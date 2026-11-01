@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>Sign in to Proofpath</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/auth.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <section class="form-panel" aria-labelledby="page-title">
+        <a class="brand" href="/" aria-label="Proofpath home">Proofpath<span>.</span></a>
+        <div class="content">
+          <h1 id="page-title">Welcome back</h1>
+          <p class="intro">Sign in to continue to Proofpath.</p>
+          <form id="login-form">
+            <label for="email">Email address</label>
+            <input id="email" name="email" type="email" autocomplete="email" maxlength="254" required />
+            <div class="password-heading"><label for="password">Password</label><a class="text-link" href="/reset-password">Forgot password?</a></div>
+            <input id="password" name="password" type="password" autocomplete="current-password" maxlength="128" required />
+            <button id="submit" type="submit">Sign in</button>
+          </form>
+          <p class="message" id="message" role="status" aria-live="polite"></p>
+          <button id="logout" type="button" hidden>Sign out</button>
+          <p class="auth-footer">New to Proofpath? <a class="text-link" href="/signup">Create an account</a></p>
+        </div>
+      </section>
+      <aside class="aside" aria-label="About Proofpath">
+        <div class="aside-copy">
+          <span class="eyebrow">Work over resume</span>
+          <h2>Real skills.<br />Real opportunities.</h2>
+          <p>Build a professional profile around evidence of the work you have done.</p>
+        </div>
+      </aside>
+    </main>
+    <script src="/auth-ui.js"></script>
+    <script>
+      const form = document.querySelector("#login-form");
+      const button = document.querySelector("#submit");
+      const logoutButton = document.querySelector("#logout");
+      const message = document.querySelector("#message");
+
+      function showSignedIn(email, purpose) {
+        form.hidden = true;
+        logoutButton.hidden = false;
+        message.dataset.kind = "success";
+        message.textContent = `Signed in as ${email}. Your ${purpose} workspace setup is the next step.`;
+      }
+
+      fetch("/api/v1/auth/session").then(async (response) => {
+        if (response.ok) {
+          const result = await response.json();
+          showSignedIn(result.user.email, result.user.initial_purpose);
+          if (result.next_action === "candidate_onboarding") window.location.assign("/candidate/onboarding");
+          else if (result.next_action === "employer_onboarding") window.location.assign("/organization/onboarding");
+        }
+      }).catch(() => {});
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        button.disabled = true;
+        button.textContent = "Signing in…";
+        message.textContent = "";
+        message.dataset.kind = "";
+        try {
+          const response = await fetch("/api/v1/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: form.elements.namedItem("email").value,
+              password: form.elements.namedItem("password").value,
+            }),
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.detail || "Sign-in failed.");
+          if (result.next_action === "candidate_onboarding") {
+            window.location.assign("/candidate/onboarding");
+            return;
+          }
+          if (result.next_action === "employer_onboarding") {
+            window.location.assign("/organization/onboarding");
+            return;
+          }
+          showSignedIn(result.user.email, result.user.initial_purpose);
+        } catch (error) {
+          message.dataset.kind = "error";
+          message.textContent = error.message || "Could not reach Proofpath. Try again.";
+        } finally {
+          button.disabled = false;
+          button.textContent = "Sign in";
+        }
+      });
+
+      logoutButton.addEventListener("click", async () => {
+        logoutButton.disabled = true;
+        try {
+          const csrf = document.cookie.split("; ").find((cookie) => cookie.startsWith("__Host-proofpath_csrf="));
+          const response = await fetch("/api/v1/auth/logout", {
+            method: "POST",
+            headers: { "X-CSRF-Token": decodeURIComponent(csrf?.split("=").slice(1).join("=") || "") },
+          });
+          if (!response.ok) throw new Error("Could not sign out. Try again.");
+          form.hidden = false;
+          logoutButton.hidden = true;
+          message.dataset.kind = "success";
+          message.textContent = "You are signed out.";
+        } catch (error) {
+          message.dataset.kind = "error";
+          message.textContent = error.message || "Could not reach Proofpath. Try again.";
+        } finally {
+          logoutButton.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>

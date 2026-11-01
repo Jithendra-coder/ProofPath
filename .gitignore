@@ -1,0 +1,13 @@
+__pycache__/
+.pytest_cache/
+.venv/
+.env
+backend/data/
+*.py[cod]
+*.sqlite3
+*.db
+node_modules/
+.next/
+*.tsbuildinfo
+.superdesign/tmp/
+frontend/.test-build/
