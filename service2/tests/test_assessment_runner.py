@@ -1,6 +1,6 @@
 import pytest
 
-from backend.app.assessment_runner import PodmanAssessmentRunner
+from service2.app.assessment_runner import PodmanAssessmentRunner
 
 
 RUNNER = PodmanAssessmentRunner()

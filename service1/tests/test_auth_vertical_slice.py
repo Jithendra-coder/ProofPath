@@ -9,10 +9,10 @@ import pytest
 from psycopg.conninfo import conninfo_to_dict
 from fastapi.testclient import TestClient
 
-from backend.app.db import connect_database
-from backend.app.main import CSRF_COOKIE, SESSION_COOKIE, create_app
-from backend.app.rate_limit import PostgresRateLimiter
-from backend.app.security import RateLimiter, hash_token, verify_password
+from service1.app.db import connect_database
+from service1.app.main import CSRF_COOKIE, SESSION_COOKIE, create_app
+from service1.app.rate_limit import PostgresRateLimiter
+from service1.app.security import RateLimiter, hash_token, verify_password
 
 
 TEST_DATABASE_URL = os.getenv(
@@ -3087,7 +3087,7 @@ def test_candidate_private_python_assessment_workspace_and_evidence(auth_client)
         def run_case(self, source, entrypoint, arguments):
             self.calls.append((entrypoint, arguments.copy()))
             output = arguments["value"].strip().lower() if "return value.strip().lower()" in source else None
-            from backend.app.assessment_runner import Execution
+            from service2.app.assessment_runner import Execution
             return Execution("completed", output)
 
     runner = FakeRunner()

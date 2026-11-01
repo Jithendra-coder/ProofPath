@@ -7,7 +7,7 @@ Proofpath is a skills-first hiring platform backed by FastAPI and PostgreSQL. Ca
 1. Install Python 3.10+ and PostgreSQL. Create a dedicated application role and separate development and test databases; do not connect the app as a PostgreSQL superuser.
 2. Copy `.env.example` to `.env` and set `DATABASE_URL` for the development database.
 3. Install dependencies: `python -m pip install -r requirements-dev.txt`.
-4. Start the API in one terminal: `python -m uvicorn backend.app.main:app --reload`.
+4. Start the API from the repository root: `python -m uvicorn service1.app.main:app --reload`.
 5. Install Node.js 20.9+ and, in a second terminal, start the Next.js interface:
 
    ```powershell
@@ -18,7 +18,7 @@ Proofpath is a skills-first hiring platform backed by FastAPI and PostgreSQL. Ca
 
 Open `http://localhost:3001`. The Next.js frontend includes a responsive homepage, registration and sign-in, candidate onboarding, dashboard, projects, skills and evidence, opportunity search, job applications, profile, and settings. Open `/explore` to try the complete example workspace without the API: project and profile edits, saved roles, and example applications persist in this browser. Example roles and activity are explicitly labeled; nothing is sent to employers.
 
-Real account routes use the existing FastAPI API at `http://127.0.0.1:8000`; set `PROOFPATH_API_ORIGIN` if the API runs elsewhere. The specialized employer, assessment, account security, and publishing controls retain their existing API-backed screens. `/manage/projects` opens source links, evidence claims, publishing, and discovery controls; `/manage/applications` opens assessment invitations, evidence sharing, and withdrawals. The API can also serve the older workflow pages directly at port 8000. The local email sink writes verification links to `backend/data/dev-mailbox.jsonl`, which is ignored by Git. This checkout uses a local-preview-only terms label and example URL; replace them with approved terms before any public deployment.
+Real account routes use the FastAPI API at `http://127.0.0.1:8000`; set `PROOFPATH_API_ORIGIN` if it runs elsewhere. Local verification and password-reset links are written to `service1/data/dev-mailbox.jsonl`, which is ignored by Git. This checkout uses a local-preview-only terms label and example URL; replace them with approved terms before any public deployment.
 
 The interface uses React, TypeScript, and local CSS with no additional UI dependencies. Shared icons, artwork, dialogs, and workspace views live in `frontend/app/components`; API handling and typed example data live in `frontend/app/lib`. Native dialogs provide keyboard focus containment, the mobile menu supports Escape and focus restoration, and reduced-motion preferences are respected. Project artwork is rendered locally with CSS, so the interface does not rely on remote image or font services.
 

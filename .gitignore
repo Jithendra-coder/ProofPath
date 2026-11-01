@@ -3,11 +3,13 @@ __pycache__/
 .venv/
 .env
 backend/data/
+service1/data/
 *.py[cod]
 *.sqlite3
 *.db
 node_modules/
 .next/
 *.tsbuildinfo
+.egg-info/
 .superdesign/tmp/
 frontend/.test-build/

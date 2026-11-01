@@ -2,7 +2,7 @@ import hashlib
 import hmac
 from datetime import timedelta
 
-from backend.app.db import connect_database
+from service1.app.db import connect_database
 
 
 class PostgresRateLimiter:

@@ -92,7 +92,7 @@
           const result = await response.json();
           if (!response.ok) throw new Error(result.detail || "Check your details and try again.");
           message.dataset.kind = "success";
-          message.textContent = "Request received. If this address is eligible, a verification link will be sent. Local development links are in backend/data/dev-mailbox.jsonl.";
+          message.textContent = "Request received. If this address is eligible, a verification link will be sent. Local development links are in service1/data/dev-mailbox.jsonl.";
           form.reset();
         } catch (error) {
           message.dataset.kind = "error";

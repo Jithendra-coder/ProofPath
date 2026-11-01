@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "proofpath-service3"
+version = "0.1.0"
+description = "Proofpath evaluation and progress service"
+requires-python = ">=3.10"
+
+[tool.setuptools]
+packages = ["service3", "service3.app"]
+package-dir = { service3 = "." }

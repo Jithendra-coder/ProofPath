@@ -13,9 +13,9 @@ import pytest
 from psycopg.conninfo import conninfo_to_dict
 from playwright.sync_api import sync_playwright
 
-from backend.app.db import connect_database
+from service1.app.db import connect_database
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 TEST_DATABASE_URL = os.getenv(
     "PROOFPATH_TEST_DATABASE_URL",
     "postgresql://proofpath_codex_app@127.0.0.1:5432/proofpath_codex_test",
@@ -42,7 +42,7 @@ def test_signup_verification_login_and_logout_in_browser(tmp_path):
         "PROOFPATH_DEV_MAILBOX": str(mailbox),
     }
     server = subprocess.Popen(
-        [sys.executable, "-m", "uvicorn", "backend.app.main:app", "--host", "127.0.0.1", "--port", str(port)],
+        [sys.executable, "-m", "uvicorn", "service1.app.main:app", "--host", "127.0.0.1", "--port", str(port)],
         cwd=PROJECT_ROOT,
         env=environment,
         stdout=subprocess.DEVNULL,
