@@ -1,0 +1,9 @@
+pyproject.toml
+./__init__.py
+./app/__init__.py
+./app/evaluation.py
+proofpath_assessment_evaluator.egg-info/PKG-INFO
+proofpath_assessment_evaluator.egg-info/SOURCES.txt
+proofpath_assessment_evaluator.egg-info/dependency_links.txt
+proofpath_assessment_evaluator.egg-info/top_level.txt
+tests/test_evaluation.py

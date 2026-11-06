@@ -1,0 +1,7 @@
+fastapi<1.0,>=0.115
+email-validator<3.0,>=2.0
+psycopg[binary]<4.0,>=3.2
+python-dotenv<2.0,>=1.0
+python-multipart<1.0,>=0.0.9
+pypdf<7.0,>=5.0
+uvicorn<1.0,>=0.30

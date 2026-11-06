@@ -3,7 +3,7 @@ __pycache__/
 .venv/
 .env
 backend/data/
-service1/data/
+candidate_api/data/
 *.py[cod]
 *.sqlite3
 *.db

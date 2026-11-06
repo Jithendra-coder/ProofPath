@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "proofpath-assessment-runner"
+version = "0.1.0"
+description = "Proofpath isolated assessment code runner"
+requires-python = ">=3.10"
+
+[tool.setuptools]
+packages = ["assessment_runner", "assessment_runner.app"]
+package-dir = { assessment_runner = "." }
