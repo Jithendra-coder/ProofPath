@@ -57,7 +57,7 @@
           const result = await response.json();
           showSignedIn(result.user.email, result.user.initial_purpose);
           if (result.next_action === "candidate_onboarding") window.location.assign("/candidate/onboarding");
-          else if (result.next_action === "employer_onboarding") window.location.assign("/organization/onboarding");
+          else window.location.assign("/candidate/onboarding");
         }
       }).catch(() => {});
 
@@ -82,10 +82,8 @@
             window.location.assign("/candidate/onboarding");
             return;
           }
-          if (result.next_action === "employer_onboarding") {
-            window.location.assign("/organization/onboarding");
-            return;
-          }
+          window.location.assign("/candidate/onboarding");
+          return;
           showSignedIn(result.user.email, result.user.initial_purpose);
         } catch (error) {
           message.dataset.kind = "error";

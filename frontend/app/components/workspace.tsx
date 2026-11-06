@@ -7,61 +7,32 @@ import {
   emptyData,
   exampleData,
   parseDemoState,
-  type Application,
-  type Job,
   type Profile,
   type Project,
+  type ResumeSnapshot,
   type WorkspaceData,
 } from "../lib/workspace-data";
 import { BrandMark, Icon, type IconName } from "./icons";
 import { Dialog } from "./dialog";
 import {
-  DashboardView,
   ProjectsView,
-  JobsView,
   ProfileView,
   SkillsView,
-  ApplicationsView,
   SettingsView,
 } from "./workspace-views";
+import { ResumeView } from "./resume-view";
 
 export type Section =
-  | "overview"
   | "projects"
   | "skills"
-  | "opportunities"
-  | "applications"
   | "profile"
+  | "resume"
   | "settings";
-type NotificationItem = {
-  id: string;
-  title: string;
-  message: string;
-  created_at: string;
-  is_read: boolean;
-};
 const nav: { key: Section; label: string; icon: IconName; path: string }[] = [
-  {
-    key: "overview",
-    label: "Overview",
-    icon: "grid",
-    path: "/candidate/dashboard",
-  },
   { key: "profile", label: "My profile", icon: "user", path: "/profile" },
   { key: "projects", label: "My projects", icon: "folder", path: "/projects" },
   { key: "skills", label: "Skills & evidence", icon: "award", path: "/skills" },
-  {
-    key: "opportunities",
-    label: "Opportunities",
-    icon: "briefcase",
-    path: "/jobs",
-  },
-  {
-    key: "applications",
-    label: "Applications",
-    icon: "mail",
-    path: "/applications",
-  },
+  { key: "resume", label: "Resume", icon: "folder", path: "/resume" },
 ];
 const storageKey = "proofpath-example-v1";
 
@@ -70,9 +41,9 @@ export type ViewProps = {
   demo: boolean;
   href: (section: Section) => string;
   onProject: (project?: Project) => void;
-  onJob: (job: Job) => void;
-  onSave: (job: Job) => void;
   onProfile: () => void;
+  onResume: (resume: ResumeSnapshot | null) => void;
+  onApplyResume: (skills: string[], roles: string[], name?: string) => Promise<void>;
   notify: (message: string) => void;
 };
 
@@ -93,63 +64,14 @@ export function Workspace({
   const [menu, setMenu] = useState(false);
   const [mobile, setMobile] = useState(false);
   const sidebar = useRef<HTMLElement>(null);
-  const [notifications, setNotifications] = useState(false);
-  const [activity, setActivity] = useState<NotificationItem[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [activityLoading, setActivityLoading] = useState(false);
-  const [activityError, setActivityError] = useState("");
   const [editor, setEditor] = useState<Project | "new" | null>(null);
-  const [job, setJob] = useState<Job | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState("");
-  const [savingIds, setSavingIds] = useState<string[]>([]);
-  async function openActivity() {
-    setNotifications(true);
-    setActivityError("");
-    if (demo) return;
-    setActivityLoading(true);
-    try {
-      const result = await api<{
-        notifications: NotificationItem[];
-        unread_count: number;
-      }>("/me/notifications");
-      setActivity(result.notifications);
-      setUnreadCount(result.unread_count);
-    } catch (reason) {
-      setActivityError(messageOf(reason));
-    } finally {
-      setActivityLoading(false);
-    }
-  }
-  async function markActivityRead(id: string) {
-    try {
-      const updated = await api<NotificationItem>(
-        `/me/notifications/${id}`,
-        "PATCH",
-        { is_read: true },
-      );
-      setActivity((items) =>
-        items.map((item) => (item.id === id ? updated : item)),
-      );
-      setUnreadCount((count) => Math.max(0, count - 1));
-    } catch (reason) {
-      setActivityError(messageOf(reason));
-    }
-  }
-  async function markAllActivityRead() {
-    try {
-      await api("/me/notifications/read-all", "POST", {});
-      setActivity((items) => items.map((item) => ({ ...item, is_read: true })));
-      setUnreadCount(0);
-    } catch (reason) {
-      setActivityError(messageOf(reason));
-    }
-  }
   const href = (key: Section) =>
     demo
-      ? `/explore${key === "overview" ? "" : `/${key}`}`
+      ? `/explore/${key}`
       : key === "settings"
         ? "/settings"
         : nav.find((item) => item.key === key)!.path;
@@ -171,31 +93,7 @@ export function Workspace({
       setError("");
       setLoading(true);
       try {
-        if (section === "opportunities") {
-          const jobs = await api<{ jobs: Job[] }>(
-            "/jobs",
-            "GET",
-            undefined,
-            controller.signal,
-          );
-          setData((previous) => ({ ...previous, jobs: jobs.jobs }));
-          try {
-            const saved = await api<{ jobs: Job[] }>(
-              "/me/saved-jobs",
-              "GET",
-              undefined,
-              controller.signal,
-            );
-            setData((previous) => ({
-              ...previous,
-              saved: saved.jobs.map((item) => item.id),
-            }));
-          } catch {
-            /* Public browsing does not require a session. */
-          }
-        } else {
-          const [profile, portfolio, jobs, applications, saved] =
-            await Promise.all([
+        const [profile, portfolio, resume] = await Promise.all([
               api<Profile>(
                 "/me/candidate/onboarding",
                 "GET",
@@ -207,35 +105,15 @@ export function Workspace({
                 public_handle: string | null;
                 published_at: string | null;
               }>("/me/portfolio", "GET", undefined, controller.signal),
-              api<{ jobs: Job[] }>(
-                "/jobs",
-                "GET",
-                undefined,
-                controller.signal,
-              ),
-              api<{ applications: Application[] }>(
-                "/me/applications",
-                "GET",
-                undefined,
-                controller.signal,
-              ),
-              api<{ jobs: Job[] }>(
-                "/me/saved-jobs",
-                "GET",
-                undefined,
-                controller.signal,
-              ),
+              api<{ resume: ResumeSnapshot | null }>("/me/resume", "GET", undefined, controller.signal),
             ]);
-          setData({
-            profile,
-            projects: portfolio.projects,
-            jobs: jobs.jobs,
-            applications: applications.applications,
-            saved: saved.jobs.map((item) => item.id),
-            public_handle: portfolio.public_handle,
-            published_at: portfolio.published_at,
-          });
-        }
+        setData({
+          profile,
+          projects: portfolio.projects,
+          resume: resume.resume,
+          public_handle: portfolio.public_handle,
+          published_at: portfolio.published_at,
+        });
       } catch (reason) {
         if (!controller.signal.aborted) setError(messageOf(reason));
       } finally {
@@ -302,34 +180,6 @@ export function Workspace({
       previous?.focus();
     };
   }, [menu, mobile]);
-
-  async function saveJob(item: Job) {
-    if (savingIds.includes(item.id)) return;
-    const saved = data.saved.includes(item.id);
-    setSavingIds((ids) => [...ids, item.id]);
-    try {
-      if (!demo)
-        await api(
-          `/me/saved-jobs/${encodeURIComponent(item.id)}`,
-          saved ? "DELETE" : "PUT",
-        );
-      setData((previous) => ({
-        ...previous,
-        saved: saved
-          ? previous.saved.filter((id) => id !== item.id)
-          : [...new Set([...previous.saved, item.id])],
-      }));
-      setToast(
-        saved
-          ? "Opportunity removed from saved roles."
-          : "Opportunity saved. Find it in your saved roles.",
-      );
-    } catch (reason) {
-      setToast(messageOf(reason));
-    } finally {
-      setSavingIds((ids) => ids.filter((id) => id !== item.id));
-    }
-  }
 
   async function saveProject(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -461,35 +311,6 @@ export function Workspace({
     }
   }
 
-  function applyExample(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!job || data.applications.some((item) => item.job_id === job.id))
-      return;
-    const coverNote = String(
-      new FormData(event.currentTarget).get("cover_note") || "",
-    ).trim();
-    setData((previous) => ({
-      ...previous,
-      applications: [
-        {
-          id: crypto.randomUUID(),
-          job_id: job.id,
-          job_title: job.title,
-          organization_name: job.organization_name,
-          status: "submitted",
-          submitted_at: new Date().toISOString(),
-          cover_note: coverNote,
-          version: 1,
-        },
-        ...previous.applications,
-      ],
-    }));
-    setJob(null);
-    setToast(
-      "Example application added to your tracker. Nothing was sent to an employer.",
-    );
-  }
-
   const openProject = (project?: Project) => {
     setFormError("");
     setEditor(project || "new");
@@ -498,14 +319,35 @@ export function Workspace({
     setFormError("");
     setProfileOpen(true);
   };
+  async function applyResume(skills: string[], roles: string[], name?: string) {
+    setBusy(true);
+    try {
+      const unique = new Map<string, string>();
+      [...data.profile.skills, ...skills].forEach((skill) => unique.set(skill.toLocaleLowerCase(), skill));
+      const uniqueRoles = new Map<string, string>();
+      [...data.profile.target_roles, ...roles].forEach((role) => uniqueRoles.set(role.toLocaleLowerCase(), role));
+      if (unique.size > 20 || uniqueRoles.size > 5) throw new Error("Your profile supports up to 20 skills and 5 target roles. Remove a profile item before adding more.");
+      const profile: Profile = { ...data.profile, ...(name ? { full_name: name } : {}), skills: [...unique.values()], target_roles: [...uniqueRoles.values()] };
+      const result = demo ? profile : await api<Profile>("/me/candidate/onboarding", "PATCH", {
+        full_name: profile.full_name,
+        target_roles: profile.target_roles,
+        skills: profile.skills,
+        expected_version: data.profile.version,
+      });
+      setData((previous) => ({ ...previous, profile: result }));
+      setToast("Selected resume details added to your profile.");
+    } catch (reason) { setToast(messageOf(reason)); }
+    finally { setBusy(false); }
+  }
+  const updateResume = (resume: ResumeSnapshot | null) => setData((previous) => ({ ...previous, resume }));
   const viewProps: ViewProps = {
     data,
     demo,
     href,
     onProject: openProject,
-    onJob: setJob,
-    onSave: saveJob,
     onProfile: openProfile,
+    onResume: updateResume,
+    onApplyResume: applyResume,
     notify: setToast,
   };
   const initials =
@@ -557,10 +399,6 @@ export function Workspace({
               >
                 <Icon name={item.icon} size={19} />
                 <span>{item.label}</span>
-                {item.key === "applications" &&
-                  data.applications.length > 0 && (
-                    <small>{data.applications.length}</small>
-                  )}
               </Link>
             </div>
           ))}
@@ -568,12 +406,6 @@ export function Workspace({
             <Link href="/app/portfolio/builder" onClick={() => setMenu(false)}>
               <Icon name="briefcase" size={19} />
               <span>My portfolio</span>
-            </Link>
-          )}
-          {!demo && (
-            <Link href="/manage/applications" onClick={() => setMenu(false)}>
-              <Icon name="clock" size={19} />
-              <span>Assessments & interviews</span>
             </Link>
           )}
         </nav>
@@ -614,27 +446,6 @@ export function Workspace({
             <strong>{currentTitle}</strong>
           </div>
           <div className="topbar-actions">
-            <form className="global-search" action={href("opportunities")}>
-              <Icon name="search" size={17} />
-              <input
-                name="q"
-                aria-label="Search opportunities"
-                placeholder="Find your next opportunity"
-              />
-              <kbd>↵</kbd>
-            </form>
-            <button
-              className="icon-button notification-button"
-              aria-label={
-                unreadCount
-                  ? `Notifications, ${unreadCount} unread`
-                  : "View notifications"
-              }
-              onClick={openActivity}
-            >
-              <Icon name="bell" size={20} />
-              {(demo || unreadCount > 0) && <i />}
-            </button>
             <Link
               href={href("profile")}
               aria-label="Open your profile"
@@ -696,14 +507,10 @@ export function Workspace({
             </div>
           ) : (
             <>
-              {section === "overview" && <DashboardView {...viewProps} />}
               {section === "projects" && <ProjectsView {...viewProps} />}
-              {section === "opportunities" && <JobsView {...viewProps} />}
               {section === "profile" && <ProfileView {...viewProps} />}
               {section === "skills" && <SkillsView {...viewProps} />}
-              {section === "applications" && (
-                <ApplicationsView {...viewProps} />
-              )}
+              {section === "resume" && <ResumeView {...viewProps} />}
               {section === "settings" && (
                 <SettingsView
                   {...viewProps}
@@ -732,82 +539,6 @@ export function Workspace({
             <Icon name="close" size={16} />
           </button>
         </div>
-      )}
-      {notifications && (
-        <Dialog
-          title={demo ? "Example activity" : "Notifications"}
-          onClose={() => setNotifications(false)}
-        >
-          <div className="activity-list">
-            <p className="muted">
-              {demo
-                ? "Example activity from this browser-only workspace."
-                : "Updates about your interviews and applications."}
-            </p>
-            {!demo && unreadCount > 0 && (
-              <button className="button plain" onClick={markAllActivityRead}>
-                Mark all as read
-              </button>
-            )}
-            {activityError && (
-              <p role="alert" className="form-error">
-                {activityError}
-              </p>
-            )}
-            {!demo && activityLoading ? (
-              <p role="status">Loading notifications…</p>
-            ) : null}
-            {demo && data.applications.length ? (
-              data.applications.slice(0, 4).map((item) => (
-                <Link
-                  key={item.id}
-                  className="activity-item"
-                  href={href("applications")}
-                  onClick={() => setNotifications(false)}
-                >
-                  <span className="soft-icon">
-                    <Icon name="briefcase" />
-                  </span>
-                  <div>
-                    <b>{item.organization_name}</b>
-                    <p>
-                      {item.job_title} · {item.status.replaceAll("_", " ")}
-                    </p>
-                  </div>
-                  <Icon name="chevron" size={16} />
-                </Link>
-              ))
-            ) : demo ? (
-              <p>
-                No example activity yet. Explore an opportunity to get started.
-              </p>
-            ) : !activityLoading && activity.length === 0 ? (
-              <p>No notifications yet.</p>
-            ) : (
-              activity.map((item) => (
-                <article className="activity-item" key={item.id}>
-                  <span className="soft-icon">
-                    <Icon name="bell" />
-                  </span>
-                  <div>
-                    <b>{item.title}</b>
-                    <p>{item.message}</p>
-                    <small>{new Date(item.created_at).toLocaleString()}</small>
-                  </div>
-                  {!item.is_read && (
-                    <button
-                      className="button plain"
-                      onClick={() => markActivityRead(item.id)}
-                      aria-label={`Mark ${item.title} as read`}
-                    >
-                      Mark read
-                    </button>
-                  )}
-                </article>
-              ))
-            )}
-          </div>
-        </Dialog>
       )}
       {editor && (
         <Dialog
@@ -1006,103 +737,6 @@ export function Workspace({
           </form>
         </Dialog>
       )}
-      {job && (
-        <Dialog wide title="A new possibility" onClose={() => setJob(null)}>
-          <div className="job-detail">
-            <div className={`company-logo logo-${job.color || "peach"}`}>
-              {job.organization_name[0]}
-            </div>
-            <div className="eyebrow">{job.organization_name}</div>
-            <h2>{job.title}</h2>
-            <p className="job-detail-meta">
-              <Icon name="location" size={16} />
-              {job.location || "Location not specified"}
-              <span>·</span>
-              {job.salary || "Salary not specified"}
-            </p>
-            <div className="detail-divider" />
-            <h3>About the role</h3>
-            <p>{job.description}</p>
-            <h3>What you’ll bring</h3>
-            <div className="skill-tags">
-              {job.competency_requirements.map((skill) => (
-                <span key={skill.competency_name}>
-                  {skill.competency_name}
-                  <small>{skill.target_level}</small>
-                </span>
-              ))}
-            </div>
-            <div className="application-note">
-              <Icon name="shield" />
-              <p>
-                Your work tells your story. Choose the evidence you share, and
-                let the hiring team see your perspective.
-              </p>
-            </div>
-            {demo ? (
-              data.applications.some((item) => item.job_id === job.id) ? (
-                <div className="success-panel">
-                  <Icon name="check" />
-                  <div>
-                    <b>This opportunity is in your application tracker.</b>
-                    <p>This is example activity. Nothing was sent.</p>
-                    {data.applications.find((item) => item.job_id === job.id)
-                      ?.cover_note && (
-                      <p>
-                        Your note:{" "}
-                        {
-                          data.applications.find(
-                            (item) => item.job_id === job.id,
-                          )?.cover_note
-                        }
-                      </p>
-                    )}
-                    <Link className="text-link" href={href("applications")}>
-                      View applications <Icon name="arrow" size={16} />
-                    </Link>
-                  </div>
-                </div>
-              ) : (
-                <form onSubmit={applyExample} className="editor-form">
-                  <label>
-                    A note to the team <span className="muted">(optional)</span>
-                    <textarea
-                      name="cover_note"
-                      maxLength={2000}
-                      rows={3}
-                      placeholder="What draws you to this opportunity?"
-                    />
-                  </label>
-                  <label className="checkbox-label">
-                    <input type="checkbox" required /> I understand this is an
-                    example application. No information will be sent to an
-                    employer.
-                  </label>
-                  <div className="dialog-footer">
-                    <button
-                      type="button"
-                      className="button secondary"
-                      onClick={() => saveJob(job)}
-                    >
-                      {data.saved.includes(job.id) ? "Saved" : "Save for later"}
-                    </button>
-                    <button className="button primary">
-                      Try an application <Icon name="arrow" size={16} />
-                    </button>
-                  </div>
-                </form>
-              )
-            ) : (
-              <Link
-                className="button primary"
-                href={`/jobs/${encodeURIComponent(job.id)}`}
-              >
-                View role & apply <Icon name="arrow" size={16} />
-              </Link>
-            )}
-          </div>
-        </Dialog>
-      )}
       {resetOpen && (
         <Dialog
           title="Start the example fresh?"
@@ -1110,9 +744,8 @@ export function Workspace({
         >
           <div className="editor-form">
             <p>
-              This removes the projects, profile edits, saved roles, and example
-              applications you added in this browser. Your real account is
-              unaffected.
+              This removes the projects and profile edits you made in this
+              browser. Your real account is unaffected.
             </p>
             <div className="dialog-footer">
               <button

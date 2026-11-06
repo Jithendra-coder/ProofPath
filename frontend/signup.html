@@ -25,11 +25,6 @@
             <label for="password">Password</label>
             <input id="password" name="password" type="password" autocomplete="new-password" minlength="12" maxlength="128" required aria-describedby="password-hint" />
             <p class="hint" id="password-hint">Use at least 12 characters.</p>
-            <label for="purpose">I’m here as</label>
-            <select id="purpose" name="initial_purpose" required>
-              <option value="candidate">Candidate</option>
-              <option value="employer">Employer</option>
-            </select>
             <label class="terms-row"><input id="terms" name="terms" type="checkbox" required /><span>I agree to the <a id="terms-link" class="text-link" href="#">current Proofpath Terms of Service</a>.</span></label>
             <button id="submit" type="submit">Create account</button>
             <p class="message" id="message" role="status" aria-live="polite"></p>
@@ -41,7 +36,7 @@
       <aside class="aside" aria-label="About Proofpath">
         <div class="aside-copy">
           <span class="eyebrow">Work over resume</span>
-          <h2>Real skills.<br />Real opportunities.</h2>
+          <h2>Real skills.<br />Real work.</h2>
           <p>Build a professional profile around evidence of the work you have done.</p>
         </div>
       </aside>
@@ -52,9 +47,6 @@
       const button = document.querySelector("#submit");
       const message = document.querySelector("#message");
       const termsLink = document.querySelector("#terms-link");
-      const requestedPurpose = new URLSearchParams(window.location.search).get("purpose");
-      if (["candidate", "employer"].includes(requestedPurpose)) form.elements.namedItem("initial_purpose").value = requestedPurpose;
-
       fetch("/api/v1/meta/public").then((response) => response.json()).then((meta) => {
         if (meta.registration_enabled && meta.terms_url) {
           termsLink.href = meta.terms_url;
@@ -62,11 +54,11 @@
           termsLink.rel = "noopener noreferrer";
           return;
         }
-        form.querySelectorAll("input, select, button").forEach((control) => { control.disabled = true; });
+        form.querySelectorAll("input, button").forEach((control) => { control.disabled = true; });
         message.dataset.kind = "error";
         message.textContent = "Account creation is unavailable until approved terms and email delivery are configured.";
       }).catch(() => {
-        form.querySelectorAll("input, select, button").forEach((control) => { control.disabled = true; });
+        form.querySelectorAll("input, button").forEach((control) => { control.disabled = true; });
         message.dataset.kind = "error";
         message.textContent = "Could not load account setup. Try again later.";
       });
@@ -85,14 +77,14 @@
               full_name: form.elements.namedItem("full_name").value,
               email: form.elements.namedItem("email").value,
               password: form.elements.namedItem("password").value,
-              initial_purpose: form.elements.namedItem("initial_purpose").value,
+              initial_purpose: "candidate",
               terms_version: await fetch("/api/v1/meta/public").then((response) => response.json()).then((meta) => meta.terms_version),
             }),
           });
           const result = await response.json();
           if (!response.ok) throw new Error(result.detail || "Check your details and try again.");
           message.dataset.kind = "success";
-          message.textContent = "Request received. If this address is eligible, a verification link will be sent. Local development links are in service1/data/dev-mailbox.jsonl.";
+          message.textContent = "Request received. If this address is eligible, a verification link will be sent. Local development links are in candidate_api/data/dev-mailbox.jsonl.";
           form.reset();
         } catch (error) {
           message.dataset.kind = "error";

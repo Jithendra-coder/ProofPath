@@ -74,9 +74,7 @@
     <header>
       <a class="brand" href="/">Proofpath<span>.</span></a>
       <nav aria-label="Workspace">
-        <a href="/jobs">Find jobs</a>
         <a href="/candidate/onboarding">Candidate profile</a>
-        <a href="/organization/onboarding">Organization workspace</a>
         <button id="logout" type="button" hidden>Sign out</button>
       </nav>
     </header>
@@ -112,7 +110,7 @@
             </div>
             <div class="wide">
               <label>Competencies you claim this project demonstrates</label>
-              <p class="hint">Choose from the Python/FastAPI track and explain your claim. These records are self-reported, unverified, and visible only to you; they are not included in public portfolios or application snapshots.</p>
+              <p class="hint">Choose from the Python/FastAPI track and explain your claim. These records are self-reported, unverified, and visible only to you; they are not included in public portfolios.</p>
               <div id="competency-options" class="competency-options" role="group" aria-label="Python and FastAPI competencies"></div>
               <div id="competency-claim-details"></div>
             </div>
@@ -142,18 +140,7 @@
         <button id="unpublish-portfolio" class="secondary" type="button" hidden>Unpublish portfolio</button>
         <a id="public-link" class="text-link" hidden></a>
       </section>
-      <section class="panel" aria-labelledby="discovery-title">
-        <h2 id="discovery-title">Employer discovery</h2>
-        <p>Opt in to let organization owners, admins, and recruiters search your public profile by name, target roles, and skills. They can open the same public profile link; email, private projects, and private claims stay hidden. Unpublishing your profile removes it from discovery.</p>
-        <form id="discovery-form">
-          <label class="consent" for="discovery-enabled">
-            <input id="discovery-enabled" type="checkbox" disabled />
-            <span>Include my public profile in employer discovery.</span>
-          </label>
-          <button id="save-discovery" class="secondary" type="submit" disabled>Save discovery preference</button>
-        </form>
-        <p class="message" id="discovery-message" role="status" aria-live="polite">Loading your discovery preference…</p>
-      </section>
+
       <section aria-labelledby="projects-title">
         <h2 id="projects-title">Your projects</h2>
         <div id="projects-list" aria-live="polite"></div>
@@ -174,16 +161,11 @@
       const publishPortfolioButton = document.querySelector("#publish-portfolio");
       const unpublishPortfolioButton = document.querySelector("#unpublish-portfolio");
       const publicLink = document.querySelector("#public-link");
-      const discoveryForm = document.querySelector("#discovery-form");
-      const discoveryToggle = document.querySelector("#discovery-enabled");
-      const saveDiscoveryButton = document.querySelector("#save-discovery");
-      const discoveryMessage = document.querySelector("#discovery-message");
       let currentProject = null;
       let projects = [];
       let competencies = [];
       let portfolio = null;
       let portfolioVersion = 0;
-      let discovery = { discoverable: false, profile_published: false };
 
       function showError(error) {
         message.dataset.kind = "error";
@@ -266,12 +248,8 @@
       }
 
       async function refreshPortfolio() {
-        const [result, discoveryResult] = await Promise.all([
-          api("GET", "/api/v1/me/portfolio"),
-          api("GET", "/api/v1/me/candidate-profile/discovery"),
-        ]);
+        const result = await api("GET", "/api/v1/me/portfolio");
         portfolio = result;
-        discovery = discoveryResult;
         projects = result.projects;
         portfolioVersion = result.version;
         if (!handleForm.dataset.edited) handleInput.value = result.public_handle || "";
@@ -286,15 +264,6 @@
           publicLink.href = path;
           publicLink.textContent = `${window.location.origin}${path}`;
         }
-        discoveryToggle.checked = discovery.discoverable;
-        discoveryToggle.disabled = !discovery.profile_published;
-        saveDiscoveryButton.disabled = !discovery.profile_published || discoveryToggle.checked === discovery.discoverable;
-        discoveryMessage.dataset.kind = "";
-        discoveryMessage.textContent = !discovery.profile_published
-          ? "Publish your free profile before opting into discovery."
-          : discovery.discoverable
-            ? "Your public profile is searchable by eligible hiring teams."
-            : "Your public profile is not included in employer discovery.";
         renderProjects();
       }
 
@@ -606,29 +575,6 @@
           message.textContent = "Your portfolio and its projects are private.";
         } catch (error) { showError(error); }
         finally { unpublishPortfolioButton.disabled = false; }
-      });
-      discoveryToggle.addEventListener("change", () => {
-        saveDiscoveryButton.disabled = !discovery.profile_published || discoveryToggle.checked === discovery.discoverable;
-      });
-      discoveryForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        saveDiscoveryButton.disabled = true;
-        try {
-          await api("PATCH", "/api/v1/me/candidate-profile/discovery", {
-            discoverable: discoveryToggle.checked,
-            consent_version: "candidate-discovery-v1",
-          });
-          await refreshPortfolio();
-          discoveryMessage.dataset.kind = "success";
-          discoveryMessage.textContent = discoveryToggle.checked
-            ? "Your public profile is searchable by eligible hiring teams."
-            : "Your profile was removed from employer discovery.";
-        } catch (error) {
-          showError(error);
-          discoveryMessage.dataset.kind = "error";
-          discoveryMessage.textContent = error.message;
-          saveDiscoveryButton.disabled = discoveryToggle.checked === discovery.discoverable;
-        }
       });
       logoutButton.addEventListener("click", async () => {
         logoutButton.disabled = true;

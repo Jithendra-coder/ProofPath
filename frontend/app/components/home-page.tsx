@@ -18,9 +18,9 @@ const steps = [
   },
   {
     number: "03",
-    icon: "briefcase" as const,
-    title: "Find your next chapter.",
-    text: "Discover teams that value what you bring. Share the right work with the right opportunity.",
+    icon: "globe" as const,
+    title: "Share on your terms.",
+    text: "Publish a profile when it feels ready, and keep the rest of your work private while you build.",
   },
 ];
 
@@ -99,7 +99,7 @@ export function HomePage() {
               </div>
               <div className="preview-footer">
                 <span>
-                  <span className="tiny-dot" /> Open to the right opportunity
+                  <span className="tiny-dot" /> Built around ability
                 </span>
                 <span>View profile ↗</span>
               </div>
@@ -125,8 +125,8 @@ export function HomePage() {
               <span>Skills with substance</span>
             </div>
             <div>
-              <Icon name="users" />
-              <span>Connections with purpose</span>
+              <Icon name="globe" />
+              <span>Sharing on your terms</span>
             </div>
           </div>
         </section>
@@ -199,68 +199,6 @@ export function HomePage() {
             </Link>
           </div>
         </section>
-        <section className="teams-section page-width" id="teams">
-          <div>
-            <div className="eyebrow">FOR TEAMS THAT SEE POTENTIAL</div>
-            <h2>
-              The right person
-              <br />
-              is more than the <em>right keywords.</em>
-            </h2>
-            <p>
-              Get closer to the work behind an application. Discover skills,
-              understand the thinking, and start a better conversation.
-            </p>
-            <Link className="button primary" href="/signup?purpose=employer">
-              Build your hiring workspace <Icon name="arrow" size={18} />
-            </Link>
-          </div>
-          <div className="team-proof">
-            <div className="team-proof-title">
-              <Icon name="users" />
-              <span>A clearer picture of potential.</span>
-            </div>
-            {[
-              {
-                initials: "am",
-                name: "Alex Morgan",
-                role: "Product Designer",
-                skill: "Design systems",
-                count: "3 projects",
-              },
-              {
-                initials: "jl",
-                name: "Jamie Lee",
-                role: "Frontend Engineer",
-                skill: "React",
-                count: "4 projects",
-              },
-              {
-                initials: "sk",
-                name: "Sam Kim",
-                role: "UX Researcher",
-                skill: "User research",
-                count: "2 projects",
-              },
-            ].map((person, i) => (
-              <div className="talent-row" key={person.name}>
-                <span className={`avatar avatar-tone-${i}`}>
-                  {person.initials}
-                </span>
-                <div>
-                  <b>{person.name}</b>
-                  <span>{person.role}</span>
-                </div>
-                <div className="talent-skill">
-                  <span>{person.skill}</span>
-                  <small>{person.count}</small>
-                </div>
-                <Icon name="upRight" size={17} />
-              </div>
-            ))}
-            <p>Example profiles · People make the hiring decisions.</p>
-          </div>
-        </section>
         <section className="faq-block page-width" id="faq">
           <div>
             <div className="eyebrow">A FEW GOOD QUESTIONS</div>
@@ -286,11 +224,11 @@ export function HomePage() {
               ],
               [
                 "Who can see my work?",
-                "You choose. Projects begin as private drafts. Publishing your profile, making projects public, and opting into employer discovery are separate choices that you control.",
+                "You choose. Projects begin as private drafts, and publishing your profile is a separate choice you control.",
               ],
               [
                 "Are all skills verified?",
-                "No. Skills you add yourself are self-reported. Project evidence and completed assessments provide additional context, and verification is shown only when it is supported.",
+                "No. Skills you add yourself are self-reported. Projects add context to those skills, and we never present them as independently verified.",
               ],
             ].map(([question, answer]) => (
               <details key={question}>
@@ -323,7 +261,7 @@ export function HomePage() {
         </Link>
         <span>Built around what you can do.</span>
         <nav aria-label="Footer">
-          <Link href="/jobs">Opportunities</Link>
+          <Link href="/explore/projects">Example workspace</Link>
           <Link href="/explore">Explore the platform</Link>
           <Link href="/login">Sign in</Link>
         </nav>

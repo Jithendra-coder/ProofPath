@@ -23,6 +23,7 @@ export async function api<T>(
           .slice(1)
           .join("=") || "";
   let response: Response;
+  const isForm = typeof FormData !== "undefined" && body instanceof FormData;
   try {
     response = await fetch(`/api/v1${path}`, {
       method,
@@ -30,12 +31,12 @@ export async function api<T>(
       cache: "no-store",
       credentials: "same-origin",
       headers: {
-        ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
+        ...(body !== undefined && !isForm ? { "Content-Type": "application/json" } : {}),
         ...(method !== "GET"
           ? { "X-CSRF-Token": decodeURIComponent(csrf) }
           : {}),
       },
-      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+      ...(body !== undefined ? { body: isForm ? body : JSON.stringify(body) } : {}),
     });
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") throw error;

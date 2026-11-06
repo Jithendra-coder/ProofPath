@@ -15,116 +15,36 @@ export type Project = {
   version: number;
   artwork?: string;
 };
-export type Job = {
-  id: string;
-  title: string;
-  organization_name: string;
-  description: string;
-  competency_requirements: { competency_name: string; target_level: string }[];
-  location?: string;
-  salary?: string;
-  category?: string;
-  color?: string;
+export type ResumeFields = {
+  full_name: string;
+  email: string;
+  phone: string;
+  target_roles: string[];
+  skills: string[];
+  education: string[];
+  experience: string[];
+  projects: string[];
+  certifications: string[];
 };
-export type Application = {
-  cover_note?: string;
+export type ResumeSnapshot = {
   id: string;
-  job_id: string;
-  job_title: string;
-  organization_name: string;
-  status: string;
-  submitted_at: string;
-  version: number;
+  filename: string;
+  media_type: string;
+  byte_size: number;
+  sha256: string;
+  extraction_method: "heuristic";
+  extracted_data: ResumeFields;
+  reviewed_at: string | null;
+  created_at: string;
+  updated_at: string;
 };
 export type WorkspaceData = {
   profile: Profile;
   projects: Project[];
-  jobs: Job[];
-  saved: string[];
-  applications: Application[];
+  resume: ResumeSnapshot | null;
   public_handle: string | null;
   published_at: string | null;
 };
-
-export const exampleJobs: Job[] = [
-  {
-    id: "form-and-field",
-    title: "Senior Product Designer",
-    organization_name: "Form & Field",
-    description:
-      "Help us make everyday work feel a little more human. You’ll own product experiences from the first conversation to the final detail, working closely with a small team of designers and engineers. We value thoughtful decisions, clear communication, and work that speaks for itself.",
-    competency_requirements: [
-      { competency_name: "Product design", target_level: "Advanced" },
-      { competency_name: "Figma", target_level: "Advanced" },
-      { competency_name: "Design systems", target_level: "Intermediate" },
-    ],
-    location: "Remote",
-    salary: "$120k – $160k",
-    category: "Design",
-    color: "peach",
-  },
-  {
-    id: "layers",
-    title: "Design Engineer",
-    organization_name: "Layers",
-    description:
-      "Bridge design and code to build a beautifully crafted collaboration product. You’ll prototype ideas, evolve our component library, and bring care to the interactions that make our product feel special.",
-    competency_requirements: [
-      { competency_name: "React", target_level: "Advanced" },
-      { competency_name: "UI design", target_level: "Advanced" },
-      { competency_name: "Accessibility", target_level: "Intermediate" },
-    ],
-    location: "Remote",
-    salary: "$130k – $175k",
-    category: "Engineering",
-    color: "lavender",
-  },
-  {
-    id: "orbit",
-    title: "Product Designer",
-    organization_name: "Orbit Studio",
-    description:
-      "Design useful, approachable tools for independent businesses. Bring curiosity, a strong portfolio, and the ability to turn complex problems into simple experiences.",
-    competency_requirements: [
-      { competency_name: "User research", target_level: "Intermediate" },
-      { competency_name: "Prototyping", target_level: "Intermediate" },
-    ],
-    location: "New York · Hybrid",
-    salary: "$100k – $140k",
-    category: "Design",
-    color: "blue",
-  },
-  {
-    id: "northstar",
-    title: "Frontend Engineer",
-    organization_name: "Northstar",
-    description:
-      "Build accessible, high-quality web experiences with a team that cares deeply about craft. You’ll work across React, TypeScript, and our growing design system.",
-    competency_requirements: [
-      { competency_name: "React", target_level: "Advanced" },
-      { competency_name: "TypeScript", target_level: "Advanced" },
-    ],
-    location: "Remote",
-    salary: "$115k – $155k",
-    category: "Engineering",
-    color: "mint",
-  },
-  {
-    id: "common",
-    title: "UX Researcher",
-    organization_name: "Common Ground",
-    description:
-      "Help us understand the people behind the numbers. Lead discovery studies, share clear insights, and partner with product teams to build experiences that matter.",
-    competency_requirements: [
-      { competency_name: "User research", target_level: "Advanced" },
-      { competency_name: "Communication", target_level: "Advanced" },
-    ],
-    location: "London · Hybrid",
-    salary: "£65k – £85k",
-    category: "Research",
-    color: "yellow",
-  },
-];
 
 export const exampleData: WorkspaceData = {
   profile: {
@@ -179,28 +99,7 @@ export const exampleData: WorkspaceData = {
       artwork: "waypoint",
     },
   ],
-  jobs: exampleJobs,
-  saved: ["layers"],
-  applications: [
-    {
-      id: "example-a",
-      job_id: "orbit",
-      job_title: "Product Designer",
-      organization_name: "Orbit Studio",
-      status: "in_review",
-      submitted_at: "2026-10-28T10:00:00Z",
-      version: 1,
-    },
-    {
-      id: "example-b",
-      job_id: "northstar",
-      job_title: "Frontend Engineer",
-      organization_name: "Northstar",
-      status: "submitted",
-      submitted_at: "2026-10-30T10:00:00Z",
-      version: 1,
-    },
-  ],
+  resume: null,
   public_handle: "alex-morgan",
   published_at: "2026-10-01T10:00:00Z",
 };
@@ -214,33 +113,10 @@ export const emptyData: WorkspaceData = {
     version: 0,
   },
   projects: [],
-  jobs: [],
-  saved: [],
-  applications: [],
+  resume: null,
   public_handle: null,
   published_at: null,
 };
-
-export function matchingJobs(
-  jobs: Job[],
-  query: string,
-  category: string,
-  remote: boolean,
-  savedOnly: boolean,
-  saved: string[],
-) {
-  const term = query.trim().toLowerCase();
-  return jobs.filter(
-    (job) =>
-      (!term ||
-        `${job.title} ${job.organization_name} ${job.competency_requirements.map((item) => item.competency_name).join(" ")}`
-          .toLowerCase()
-          .includes(term)) &&
-      (category === "All roles" || job.category === category) &&
-      (!remote || job.location === "Remote") &&
-      (!savedOnly || saved.includes(job.id)),
-  );
-}
 
 export function skillEvidence(projects: Project[], skill: string) {
   return projects.filter((project) =>
@@ -256,13 +132,18 @@ export function parseDemoState(raw: string | null): WorkspaceData {
     const data = JSON.parse(raw);
     const strings = (value: unknown): value is string[] =>
       Array.isArray(value) && value.every((item) => typeof item === "string");
+    const savedResume = data.resume;
+    const resume = savedResume && typeof savedResume === "object" &&
+      typeof savedResume.filename === "string" && typeof savedResume.sha256 === "string" &&
+      savedResume.extracted_data && typeof savedResume.extracted_data.full_name === "string" &&
+      typeof savedResume.extracted_data.email === "string" && typeof savedResume.extracted_data.phone === "string" &&
+      ["target_roles", "skills", "education", "experience", "projects", "certifications"].every((key) => strings(savedResume.extracted_data[key]))
+      ? savedResume as ResumeSnapshot : null;
     if (
       typeof data.profile?.full_name !== "string" ||
       !strings(data.profile.skills) ||
       !strings(data.profile.target_roles) ||
-      !strings(data.saved) ||
-      !Array.isArray(data.projects) ||
-      !Array.isArray(data.applications)
+      !Array.isArray(data.projects)
     )
       return structuredClone(exampleData);
     if (
@@ -277,27 +158,11 @@ export function parseDemoState(raw: string | null): WorkspaceData {
       )
     )
       return structuredClone(exampleData);
-    if (
-      !data.applications.every(
-        (a: Application) =>
-          [
-            a.id,
-            a.job_id,
-            a.job_title,
-            a.organization_name,
-            a.status,
-            a.submitted_at,
-          ].every((value) => typeof value === "string") &&
-          (a.cover_note === undefined || typeof a.cover_note === "string"),
-      )
-    )
-      return structuredClone(exampleData);
     return {
       ...structuredClone(exampleData),
       profile: data.profile,
       projects: data.projects,
-      saved: data.saved,
-      applications: data.applications,
+      resume,
     };
   } catch {
     return structuredClone(exampleData);

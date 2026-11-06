@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { AppHeader } from "./app-header";
 import { StatusPanel } from "./ui";
 
-type NavigationSection = "public" | "candidate" | "employer";
+type NavigationSection = "public" | "candidate";
 
 type PagePayload = {
   body: string;

@@ -105,7 +105,7 @@ export function OnboardingPage() {
               You’ve made your introduction. Now add a project, explore your
               skills, and see where your work can take you.
             </p>
-            <Link className="button primary" href="/candidate/dashboard">
+            <Link className="button primary" href="/profile">
               Open your workspace <Icon name="arrow" size={17} />
             </Link>
           </div>

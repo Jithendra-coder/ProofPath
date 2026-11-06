@@ -16,18 +16,12 @@ type Session = { user: { initial_purpose: string }; next_action: string };
 export function AuthPage({ mode }: { mode: "login" | "signup" }) {
   const signup = mode === "signup";
   const [meta, setMeta] = useState<Metadata | null>(null);
-  const [purpose, setPurpose] = useState("candidate");
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   useEffect(() => {
     if (!signup) return;
-    setPurpose(
-      new URLSearchParams(window.location.search).get("purpose") === "employer"
-        ? "employer"
-        : "candidate",
-    );
     const controller = new AbortController();
     api<Metadata>("/meta/public", "GET", undefined, controller.signal)
       .then((result) => {
@@ -56,7 +50,7 @@ export function AuthPage({ mode }: { mode: "login" | "signup" }) {
           full_name: String(values.get("full_name")).trim(),
           email: values.get("email"),
           password: values.get("password"),
-          initial_purpose: purpose,
+          initial_purpose: "candidate",
           terms_version: meta!.terms_version,
         });
         setSuccess(true);
@@ -68,11 +62,7 @@ export function AuthPage({ mode }: { mode: "login" | "signup" }) {
         window.location.assign(
           result.next_action === "candidate_onboarding"
             ? "/candidate/onboarding"
-            : result.next_action === "employer_onboarding"
-              ? "/organization/onboarding"
-              : result.user.initial_purpose === "employer"
-                ? "/organization/jobs"
-                : "/candidate/dashboard",
+            : "/profile",
         );
       }
     } catch (reason) {
@@ -125,24 +115,6 @@ export function AuthPage({ mode }: { mode: "login" | "signup" }) {
                   ? "Give your work, your skills, and your potential a place to grow."
                   : "Pick up where you left off. Your next possibility is waiting."}
               </p>
-              {signup && (
-                <div className="purpose-choice" aria-label="Account purpose">
-                  <button
-                    type="button"
-                    aria-pressed={purpose === "candidate"}
-                    onClick={() => setPurpose("candidate")}
-                  >
-                    <Icon name="user" size={18} /> I’m building my career
-                  </button>
-                  <button
-                    type="button"
-                    aria-pressed={purpose === "employer"}
-                    onClick={() => setPurpose("employer")}
-                  >
-                    <Icon name="users" size={18} /> I’m building a team
-                  </button>
-                </div>
-              )}
               <form className="editor-form auth-form" onSubmit={submit}>
                 {signup && (
                   <label>

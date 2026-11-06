@@ -5,7 +5,7 @@ import "./proofpath.css";
 export const metadata: Metadata = {
   title: "Proofpath — Let your work lead the way",
   description:
-    "You’re more than a résumé. Showcase your work, connect your skills to real evidence, and find your next opportunity on Proofpath.",
+    "Build a professional profile, connect skills to project evidence, and share your work on your terms with Proofpath.",
 };
 
 export default function RootLayout({

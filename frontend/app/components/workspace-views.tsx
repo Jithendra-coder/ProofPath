@@ -3,9 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import {
-  matchingJobs,
   skillEvidence,
-  type Job,
   type Project,
 } from "../lib/workspace-data";
 import { Icon, type IconName } from "./icons";
@@ -101,273 +99,6 @@ function ProjectCard({
         </div>
       </div>
     </article>
-  );
-}
-
-function JobCard({
-  job,
-  saved,
-  onSave,
-  onOpen,
-  compact = false,
-}: {
-  job: Job;
-  saved: boolean;
-  onSave: () => void;
-  onOpen: () => void;
-  compact?: boolean;
-}) {
-  return (
-    <article className={`job-card ${compact ? "job-card-compact" : ""}`}>
-      <div className="job-card-top">
-        <div className={`company-logo logo-${job.color || "peach"}`}>
-          {job.organization_name === "Layers" ? "≋" : job.organization_name[0]}
-        </div>
-        <div>
-          <span className="company-name">{job.organization_name}</span>
-          {compact && (
-            <button onClick={onOpen} className="job-title">
-              {job.title}
-            </button>
-          )}
-        </div>
-        <button
-          className={`icon-button save-button ${saved ? "is-saved" : ""}`}
-          aria-label={`${saved ? "Unsave" : "Save"} ${job.title} at ${job.organization_name}`}
-          aria-pressed={saved}
-          onClick={onSave}
-        >
-          <Icon name="bookmark" size={19} />
-        </button>
-      </div>
-      {!compact && (
-        <>
-          <button onClick={onOpen} className="job-title">
-            {job.title}
-          </button>
-          <p className="job-description">{job.description}</p>
-          <div className="skill-tags">
-            {job.competency_requirements.slice(0, 3).map((skill) => (
-              <span key={skill.competency_name}>{skill.competency_name}</span>
-            ))}
-          </div>
-        </>
-      )}
-      <div className="job-card-footer">
-        <span>
-          <Icon name="location" size={14} />
-          {job.location || "Location not listed"}
-        </span>
-        {job.salary && <strong>{job.salary}</strong>}
-        <button
-          onClick={onOpen}
-          className="icon-button"
-          aria-label={`View ${job.title}`}
-        >
-          <Icon name="arrow" size={16} />
-        </button>
-      </div>
-    </article>
-  );
-}
-
-export function DashboardView(props: ViewProps) {
-  const { data, demo, href, onProject, onJob, onSave } = props;
-  const firstName = data.profile.full_name.split(" ")[0] || "there";
-  const completion = [
-    !!data.profile.full_name,
-    !!data.profile.target_roles.length,
-    !!data.profile.skills.length,
-    !!data.projects.length,
-  ];
-  const progress = completion.filter(Boolean).length * 25;
-  return (
-    <>
-      <PageHeading
-        eyebrow="YOUR POTENTIAL, IN PROGRESS"
-        title={`A little further, ${firstName}.`}
-        text="Good work adds up. Here’s where your next chapter begins."
-      >
-        <Link className="button secondary" href={href("profile")}>
-          <Icon name="eye" size={17} /> View my profile
-        </Link>
-      </PageHeading>
-      <section className="dashboard-hero">
-        <div>
-          <h2>Make room for your next project.</h2>
-          <p>Add your latest work. Show the thinking behind it.</p>
-        </div>
-        <button className="button primary" onClick={() => onProject()}>
-          <Icon name="plus" size={16} /> Add a project
-        </button>
-      </section>
-      <section
-        className="workspace-stats"
-        aria-label="Your workspace at a glance"
-      >
-        {[
-          {
-            icon: "folder" as const,
-            label: "Projects in your portfolio",
-            value: data.projects.length,
-            key: "projects" as const,
-            detail: `${data.projects.filter((project) => project.visibility === "public").length} shared publicly`,
-          },
-          {
-            icon: "award" as const,
-            label: "Skills in your toolkit",
-            value: data.profile.skills.length,
-            key: "skills" as const,
-            detail: "Grounded in your experience",
-          },
-          {
-            icon: "briefcase" as const,
-            label: "Opportunities saved",
-            value: data.saved.length,
-            key: "opportunities" as const,
-            detail: "Your next move, on your terms",
-          },
-        ].map((stat) => (
-          <Link href={href(stat.key)} className="stat-item" key={stat.label}>
-            <span className="stat-icon">
-              <Icon name={stat.icon} />
-            </span>
-            <div>
-              <span>{stat.label}</span>
-              <strong>{String(stat.value).padStart(2, "0")}</strong>
-              <small>{stat.detail}</small>
-            </div>
-            <Icon name="upRight" size={17} />
-          </Link>
-        ))}
-      </section>
-      <div className="dashboard-columns">
-        <div className="dashboard-primary">
-          <section>
-            <div className="block-heading">
-              <div>
-                <h2>
-                  Your work, in the spotlight
-                  <span className="heading-dot">.</span>
-                </h2>
-                <p>More than projects. Proof of what you bring.</p>
-              </div>
-              <Link className="text-link" href={href("projects")}>
-                View all <Icon name="arrow" size={15} />
-              </Link>
-            </div>
-            {data.projects.length ? (
-              <div className="project-grid">
-                {data.projects.slice(0, 2).map((project) => (
-                  <ProjectCard
-                    key={project.id}
-                    project={project}
-                    onClick={() => onProject(project)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <EmptyState
-                icon="folder"
-                title="Your first piece of proof belongs here."
-                text="Start with a project you’re proud of. It doesn’t have to be perfect."
-              >
-                <button
-                  className="button secondary"
-                  onClick={() => onProject()}
-                >
-                  Add your first project
-                </button>
-              </EmptyState>
-            )}
-          </section>
-          <section className="dashboard-jobs">
-            <div className="block-heading">
-              <div>
-                <h2>
-                  A few new possibilities<span className="heading-dot">.</span>
-                </h2>
-                <p>
-                  {demo
-                    ? "Example opportunities for your next chapter."
-                    : "Explore teams and the work they’re building."}
-                </p>
-              </div>
-              <Link className="text-link" href={href("opportunities")}>
-                Explore <Icon name="arrow" size={15} />
-              </Link>
-            </div>
-            {data.jobs.length ? (
-              data.jobs
-                .slice(0, 2)
-                .map((job) => (
-                  <JobCard
-                    key={job.id}
-                    job={job}
-                    compact
-                    saved={data.saved.includes(job.id)}
-                    onSave={() => onSave(job)}
-                    onOpen={() => onJob(job)}
-                  />
-                ))
-            ) : (
-              <EmptyState
-                icon="briefcase"
-                title="New possibilities are on the way."
-                text="Published opportunities will appear here."
-              />
-            )}
-          </section>
-        </div>
-        <aside className="dashboard-secondary">
-          <section className="profile-progress-card">
-            <div className="block-heading">
-              <h3>A little more you.</h3>
-              <Icon name="sparkle" size={19} />
-            </div>
-            <p>A complete profile helps people see the whole picture.</p>
-            <div
-              className="progress-circle"
-              style={{
-                background: `conic-gradient(var(--brand) ${progress}%, #f1e9e3 0)`,
-              }}
-            >
-              <div>
-                <strong>{progress}%</strong>
-                <span>profile essentials</span>
-              </div>
-            </div>
-            <ul className="completion-list">
-              {[
-                "Make your introduction",
-                "Set your direction",
-                "Add your skills",
-                "Show your work",
-              ].map((label, i) => (
-                <li key={label}>
-                  <span className={completion[i] ? "complete" : ""}>
-                    {completion[i] ? <Icon name="check" size={12} /> : i + 1}
-                  </span>
-                  {label}
-                </li>
-              ))}
-            </ul>
-            <Link href={href("profile")} className="button secondary">
-              {progress === 100 ? "See your profile" : "Complete your profile"}
-              <Icon name="arrow" size={16} />
-            </Link>
-          </section>
-          <div className="privacy-note">
-            <Icon name="shield" size={20} />
-            <p>
-              Your work. Your choice.
-              <br />
-              <span>You decide what the world sees.</span>
-            </p>
-          </div>
-        </aside>
-      </div>
-    </>
   );
 }
 
@@ -468,156 +199,6 @@ export function ProjectsView({ data, demo, onProject }: ViewProps) {
   );
 }
 
-export function JobsView({ data, demo, onJob, onSave }: ViewProps) {
-  const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("All roles");
-  const [remote, setRemote] = useState(false);
-  const [savedOnly, setSavedOnly] = useState(false);
-  useEffect(() => {
-    setQuery(new URLSearchParams(window.location.search).get("q") || "");
-  }, []);
-  const jobs = matchingJobs(
-    data.jobs,
-    query,
-    category,
-    remote,
-    savedOnly,
-    data.saved,
-  );
-  return (
-    <>
-      <PageHeading
-        eyebrow="YOUR NEXT CHAPTER"
-        title="Find work that feels like you."
-        text="Explore possibilities. Find your people. Bring what makes you different."
-      />
-      <section className="opportunity-search">
-        <label>
-          <Icon name="search" size={21} />
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search by role, company, or skill"
-            aria-label="Search by role, company, or skill"
-          />
-          {query && (
-            <button
-              className="icon-button"
-              onClick={() => setQuery("")}
-              aria-label="Clear search"
-            >
-              <Icon name="close" size={17} />
-            </button>
-          )}
-        </label>
-        {demo && (
-          <label className="location-select">
-            <Icon name="location" size={19} />
-            <select
-              aria-label="Work location"
-              value={remote ? "remote" : "all"}
-              onChange={(event) => setRemote(event.target.value === "remote")}
-            >
-              <option value="all">Any location</option>
-              <option value="remote">Remote only</option>
-            </select>
-          </label>
-        )}
-      </section>
-      <div className="filter-bar opportunity-filters">
-        <div className="tabs">
-          <button aria-pressed={!savedOnly} onClick={() => setSavedOnly(false)}>
-            Explore opportunities
-          </button>
-          <button aria-pressed={savedOnly} onClick={() => setSavedOnly(true)}>
-            <Icon name="bookmark" size={15} /> Saved{" "}
-            <span>{data.saved.length}</span>
-          </button>
-        </div>
-        {demo && (
-          <label className="category-select">
-            <Icon name="filter" size={16} />
-            <select
-              aria-label="Role category"
-              value={category}
-              onChange={(event) => setCategory(event.target.value)}
-            >
-              {["All roles", "Design", "Engineering", "Research"].map(
-                (item) => (
-                  <option key={item}>{item}</option>
-                ),
-              )}
-            </select>
-          </label>
-        )}
-      </div>
-      <div className="results-count" role="status">
-        <strong>
-          {jobs.length} {savedOnly ? "saved " : ""}
-          {jobs.length === 1 ? "opportunity" : "opportunities"}
-        </strong>
-        <span>
-          {demo
-            ? "Example roles · For exploring the experience"
-            : "Published by hiring teams"}
-        </span>
-      </div>
-      {jobs.length ? (
-        <div className="jobs-grid">
-          {jobs.map((job) => (
-            <JobCard
-              key={job.id}
-              job={job}
-              saved={data.saved.includes(job.id)}
-              onSave={() => onSave(job)}
-              onOpen={() => onJob(job)}
-            />
-          ))}
-        </div>
-      ) : (
-        <EmptyState
-          icon="briefcase"
-          title={
-            savedOnly
-              ? "Your shortlist starts here."
-              : "No opportunities match just yet."
-          }
-          text={
-            savedOnly
-              ? "Save roles that catch your eye. They’ll be here when you’re ready."
-              : "Try a different skill or clear your filters to see more possibilities."
-          }
-        >
-          <button
-            className="button secondary"
-            onClick={() => {
-              setQuery("");
-              setCategory("All roles");
-              setRemote(false);
-              setSavedOnly(false);
-            }}
-          >
-            Explore all roles <Icon name="arrow" size={16} />
-          </button>
-        </EmptyState>
-      )}
-      <div className="opportunity-bottom">
-        <Icon name="sparkle" size={22} />
-        <div>
-          <b>Your next opportunity might start with your profile.</b>
-          <p>Let your projects show what a job title can’t.</p>
-        </div>
-        <Link
-          className="text-link"
-          href={demo ? "/explore/profile" : "/profile"}
-        >
-          Make it yours <Icon name="arrow" size={16} />
-        </Link>
-      </div>
-    </>
-  );
-}
-
 export function SkillsView({ data, onProfile, onProject, demo }: ViewProps) {
   const [query, setQuery] = useState("");
   const skills = data.profile.skills.filter((skill) =>
@@ -642,7 +223,7 @@ export function SkillsView({ data, onProfile, onProject, demo }: ViewProps) {
           <h2>Claims are a starting point. Evidence goes further.</h2>
           <p>
             Skills you add are self-reported. Projects show how you use them.
-            Verified assessment results are a separate kind of evidence.
+            Assessment results are not available in this product version yet.
           </p>
         </div>
       </div>
@@ -723,164 +304,7 @@ export function SkillsView({ data, onProfile, onProject, demo }: ViewProps) {
           {demo ? (
             "Example skills demonstrate how evidence connects to work. They are not verified credentials."
           ) : (
-            <>
-              Assessment invitations and verified evidence are available in{" "}
-              <Link href="/manage/applications">
-                your application workspace
-              </Link>
-              .
-            </>
-          )}
-        </p>
-      </div>
-    </>
-  );
-}
-
-export function ApplicationsView({ data, demo, href, onJob }: ViewProps) {
-  const [tab, setTab] = useState("All applications");
-  const archived = ["rejected", "withdrawn", "hired"];
-  const applications = data.applications.filter(
-    (item) =>
-      tab === "All applications" ||
-      (tab === "Active"
-        ? !archived.includes(item.status)
-        : archived.includes(item.status)),
-  );
-  return (
-    <>
-      <PageHeading
-        eyebrow="GOOD THINGS TAKE THEIR OWN PATH"
-        title="Your next move, in motion."
-        text="Keep track of the opportunities you’re exploring and what comes next."
-      >
-        <Link className="button secondary" href={href("opportunities")}>
-          Find opportunities <Icon name="arrow" size={17} />
-        </Link>
-      </PageHeading>
-      <div className="application-summary">
-        {[
-          {
-            label: "In the pipeline",
-            number: data.applications.filter(
-              (item) => !archived.includes(item.status),
-            ).length,
-            icon: "briefcase" as const,
-          },
-          {
-            label: "In conversation",
-            number: data.applications.filter((item) =>
-              ["in_review", "assessment", "interview"].includes(item.status),
-            ).length,
-            icon: "users" as const,
-          },
-          {
-            label: "Offers received",
-            number: data.applications.filter((item) => item.status === "offer")
-              .length,
-            icon: "sparkle" as const,
-          },
-        ].map((item) => (
-          <div key={item.label}>
-            <Icon name={item.icon} />
-            <strong>{String(item.number).padStart(2, "0")}</strong>
-            <span>{item.label}</span>
-          </div>
-        ))}
-      </div>
-      <div className="filter-bar">
-        <div className="tabs">
-          {["All applications", "Active", "Archived"].map((item) => (
-            <button
-              aria-pressed={tab === item}
-              key={item}
-              onClick={() => setTab(item)}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-        <span className="muted small">
-          {demo ? "Example application activity" : "Your applications"}
-        </span>
-      </div>
-      {applications.length ? (
-        <div className="application-list">
-          <div className="application-table-header">
-            <span>OPPORTUNITY</span>
-            <span>APPLIED</span>
-            <span>STATUS</span>
-            <span />
-          </div>
-          {applications.map((application) => (
-            <article className="application-row" key={application.id}>
-              <div>
-                <span className="company-logo logo-peach">
-                  {application.organization_name[0]}
-                </span>
-                <div>
-                  <h3>{application.job_title}</h3>
-                  <p>{application.organization_name}</p>
-                </div>
-              </div>
-              <time dateTime={application.submitted_at}>
-                {new Date(application.submitted_at).toLocaleDateString(
-                  "en-US",
-                  { month: "short", day: "numeric", year: "numeric" },
-                )}
-              </time>
-              <span className={`status-pill status-${application.status}`}>
-                <span />
-                {application.status.replaceAll("_", " ")}
-              </span>
-              {demo ? (
-                <button
-                  className="icon-button"
-                  aria-label={`View application for ${application.job_title}`}
-                  onClick={() => {
-                    const job = data.jobs.find(
-                      (item) => item.id === application.job_id,
-                    );
-                    if (job) onJob(job);
-                  }}
-                >
-                  <Icon name="arrow" size={18} />
-                </button>
-              ) : (
-                <Link
-                  href="/manage/applications"
-                  className="icon-button"
-                  aria-label={`Manage application for ${application.job_title}`}
-                >
-                  <Icon name="arrow" size={18} />
-                </Link>
-              )}
-            </article>
-          ))}
-        </div>
-      ) : (
-        <EmptyState
-          icon="mail"
-          title="A new chapter is waiting."
-          text="When you apply for an opportunity, you can follow its progress here."
-        >
-          <Link className="button primary" href={href("opportunities")}>
-            Explore opportunities <Icon name="arrow" size={17} />
-          </Link>
-        </EmptyState>
-      )}
-      <div className="inline-note">
-        <Icon name="shield" />
-        <p>
-          {demo ? (
-            "This is a practice space. Example applications are saved in this browser and are never sent to employers."
-          ) : (
-            <>
-              You’re in control.{" "}
-              <Link href="/manage/applications">
-                Manage evidence sharing, assessment invitations, and withdrawal.
-              </Link>
-            </>
+            "Skills are self-reported. Add project examples to show how you use them."
           )}
         </p>
       </div>
@@ -1056,8 +480,7 @@ export function ProfileView({
           <p>
             Ready to share?{" "}
             <Link href="/manage/projects">
-              Manage your public address, project visibility, and employer
-              discovery.
+              Manage your public address, project visibility, and sharing.
             </Link>
           </p>
         </div>
@@ -1113,8 +536,7 @@ export function SettingsView({
             <div>
               <b>Account data & privacy</b>
               <p>
-                Manage discovery, export your information, and control your
-                data.
+                Export your information and choose what you share.
               </p>
             </div>
             <Link
@@ -1154,8 +576,7 @@ export function SettingsView({
               <div>
                 <b>Reset example activity</b>
                 <p>
-                  Restore the original projects, profile, and sample
-                  applications.
+                  Restore the original example profile and projects.
                 </p>
               </div>
               <button className="button secondary" onClick={onReset}>
@@ -1169,7 +590,7 @@ export function SettingsView({
           <div>
             <b>Built around what you can do.</b>
             <p>
-              Proofpath brings your work, skills, and next opportunities
+              Proofpath brings your professional identity, work, and skills
               together.
             </p>
           </div>

@@ -1,27 +1,19 @@
 import Link from "next/link";
 import { BrandMark, Icon } from "./icons";
 
-type Section = "public" | "candidate" | "employer";
+type Section = "public" | "candidate";
 
 const navigation: Record<Section, Array<{ label: string; href: string }>> = {
   public: [
     { label: "How it works", href: "/#how-it-works" },
     { label: "For talent", href: "/#candidates" },
-    { label: "For teams", href: "/#teams" },
-    { label: "Opportunities", href: "/jobs" },
+    { label: "For students", href: "/#how-it-works" },
   ],
   candidate: [
-    { label: "Overview", href: "/candidate/dashboard" },
+    { label: "Profile", href: "/profile" },
     { label: "Projects", href: "/projects" },
     { label: "Portfolio", href: "/app/portfolio/builder" },
-    { label: "Find jobs", href: "/jobs" },
-    { label: "Applications", href: "/applications" },
-  ],
-  employer: [
-    { label: "Candidates", href: "/organization/candidates" },
-    { label: "Jobs", href: "/organization/jobs" },
-    { label: "Applications", href: "/organization/applications" },
-    { label: "Assessments", href: "/organization/assessments" },
+    { label: "Skills", href: "/skills" },
   ],
 };
 
@@ -62,16 +54,10 @@ export function AppHeader({
           <Link
             className="header-cta"
             href={
-              section === "employer"
-                ? "/organization/onboarding"
-                : "/signup?purpose=candidate"
+              "/signup"
             }
           >
-            {section === "employer"
-              ? "Workspace"
-              : section === "candidate"
-                ? "My profile"
-                : "Get started"}{" "}
+            {section === "candidate" ? "My profile" : "Get started"}{" "}
             <Icon name="arrow" size={16} />
           </Link>
         </div>

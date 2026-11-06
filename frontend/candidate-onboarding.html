@@ -32,8 +32,7 @@
           </form>
           <p class="message" id="message" role="status" aria-live="polite">Loading your private draft…</p>
           <p id="login-link" hidden><a class="text-link" href="/login">Sign in to continue</a></p>
-          <p id="organization-link" hidden><a class="text-link" href="/organization/onboarding">Set up an organization workspace</a></p>
-          <p id="dashboard-link" hidden><a class="text-link" href="/candidate/dashboard">Open candidate dashboard</a></p>
+          <p id="dashboard-link" hidden><a class="text-link" href="/projects">Open your profile</a></p>
           <p id="security-link" hidden><a class="text-link" href="/security/sessions">Security &amp; sessions</a></p>
           <p id="projects-link" hidden><a class="text-link" href="/projects">Manage private project drafts</a></p>
           <button id="logout" type="button" hidden>Sign out</button>
@@ -54,7 +53,6 @@
       const completeButton = document.querySelector("#complete");
       const logoutButton = document.querySelector("#logout");
       const loginLink = document.querySelector("#login-link");
-      const organizationLink = document.querySelector("#organization-link");
       const dashboardLink = document.querySelector("#dashboard-link");
       const securityLink = document.querySelector("#security-link");
       const projectsLink = document.querySelector("#projects-link");
@@ -120,7 +118,6 @@
         }
         if (!response.ok) throw new Error(result.detail || "Could not load your draft.");
         draft = result;
-        organizationLink.hidden = false;
         dashboardLink.hidden = false;
         securityLink.hidden = false;
         projectsLink.hidden = false;
@@ -156,7 +153,6 @@
           form.hidden = true;
           logoutButton.hidden = true;
           loginLink.hidden = false;
-          organizationLink.hidden = true;
           dashboardLink.hidden = true;
           securityLink.hidden = true;
           projectsLink.hidden = true;

@@ -1,42 +1,11 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const {
-  matchingJobs,
   skillEvidence,
   parseDemoState,
   exampleData,
 } = require("../.test-build/workspace-data.js");
 const { api, ApiError } = require("../.test-build/api.js");
-
-test("job filters combine search, category, location, and saved state", () => {
-  const filtered = matchingJobs(
-    exampleData.jobs,
-    "  REACT ",
-    "Engineering",
-    true,
-    true,
-    ["layers"],
-  );
-  assert.deepEqual(
-    filtered.map((job) => job.id),
-    ["layers"],
-  );
-  assert.equal(
-    matchingJobs(
-      exampleData.jobs,
-      "missing role",
-      "All roles",
-      false,
-      false,
-      [],
-    ).length,
-    0,
-  );
-  assert.equal(
-    matchingJobs(exampleData.jobs, "", "All roles", false, true, []).length,
-    0,
-  );
-});
 
 test("evidence matches complete skill names without claiming verification", () => {
   assert.deepEqual(
@@ -58,12 +27,23 @@ test("invalid browser data recovers and valid edits survive reload", () => {
   }
   const edited = structuredClone(exampleData);
   edited.profile.full_name = "Taylor Sample";
-  edited.saved.push("orbit");
   const restored = parseDemoState(JSON.stringify(edited));
   assert.equal(restored.profile.full_name, "Taylor Sample");
-  assert.ok(restored.saved.includes("orbit"));
   restored.projects[0].name = "Changed";
   assert.equal(exampleData.projects[0].name, "Folio — Finance, made human");
+});
+
+test("example resume details survive reload only when their shape is valid", () => {
+  const edited = structuredClone(exampleData);
+  edited.resume = {
+    id: "demo", filename: "resume.txt", media_type: "text/plain", byte_size: 10,
+    sha256: "demo", extraction_method: "heuristic",
+    extracted_data: { full_name: "Taylor", email: "t@example.com", phone: "", target_roles: [], skills: ["Python"], education: [], experience: [], projects: [], certifications: [] },
+    reviewed_at: null, created_at: "now", updated_at: "now",
+  };
+  assert.equal(parseDemoState(JSON.stringify(edited)).resume.extracted_data.skills[0], "Python");
+  edited.resume.extracted_data.skills = "invalid";
+  assert.equal(parseDemoState(JSON.stringify(edited)).resume, null);
 });
 
 test("API mutations send JSON, the decoded CSRF token, and same-origin credentials", async (t) => {
@@ -80,6 +60,21 @@ test("API mutations send JSON, the decoded CSRF token, and same-origin credentia
   assert.deepEqual(await api("/me/projects", "POST", { name: "Example" }), {
     id: "created",
   });
+  assert.equal(mock.mock.callCount(), 1);
+});
+
+test("API sends multipart bodies without overriding the browser boundary", async (t) => {
+  global.document = { cookie: "__Host-proofpath_csrf=token" };
+  t.after(() => delete global.document);
+  const form = new FormData();
+  form.set("file", new Blob(["resume"]), "resume.pdf");
+  const mock = t.mock.method(global, "fetch", async (_url, options) => {
+    assert.equal(options.body, form);
+    assert.equal(options.headers["Content-Type"], undefined);
+    assert.equal(options.headers["X-CSRF-Token"], "token");
+    return new Response(JSON.stringify({ ok: true }), { status: 200 });
+  });
+  assert.deepEqual(await api("/me/resume", "POST", form), { ok: true });
   assert.equal(mock.mock.callCount(), 1);
 });
 
@@ -106,7 +101,7 @@ test("API failures preserve validation messages and handle non-JSON errors", asy
     async () => new Response("Bad gateway", { status: 502 }),
   );
   await assert.rejects(
-    api("/jobs"),
+    api("/projects"),
     (error) => error instanceof ApiError && error.status === 502,
   );
 });
@@ -117,9 +112,9 @@ test("API accepts empty 204 responses and preserves cancellation", async (t) => 
     "fetch",
     async () => new Response(null, { status: 204 }),
   );
-  assert.equal(await api("/me/saved-jobs/example", "DELETE"), undefined);
+  assert.equal(await api("/me/projects/example", "DELETE"), undefined);
   mock.mock.mockImplementation(async () => {
     throw new DOMException("Cancelled", "AbortError");
   });
-  await assert.rejects(api("/jobs"), (error) => error.name === "AbortError");
+  await assert.rejects(api("/projects"), (error) => error.name === "AbortError");
 });
